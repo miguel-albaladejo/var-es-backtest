@@ -54,6 +54,30 @@ and Expected Shortfall is; this project tests **how** they behave on real data.
 
 ![Return distribution vs Normal](figures/histogram.png)
 
+## Rolling VaR forecasts (step 2)
+
+One-day 99% VaR and ES forecasts with a 500-day rolling window. The forecast
+for day *t* only uses losses up to *t − 1*. A correct 99% VaR should be
+breached on **1%** of days.
+
+| Exception rate | S&P 500 | IBEX 35 |
+|---|---|---|
+| Historical simulation | 1.53% | 1.33% |
+| Normal | 2.48% | 1.95% |
+| Student-t | 1.58% | 1.49% |
+
+*S&P 500: 6,222 forecasts (2002–2026). IBEX 35: 6,300 forecasts (2002–2026).*
+
+**Key takeaways**
+
+- **The Gaussian VaR breaches 2.5× more often than it should** on the S&P 500, a direct consequence of fat tails.
+- **Fixing the tails is not enough.** The Student-t improves on the Normal but not on historical simulation, and no model gets below 1.3%. The main problem is *dynamics*: a 500-day equally weighted window reacts too slowly to volatility changes.
+- **A symmetric Student-t can underperform historical simulation** (IBEX): returns are negatively skewed, so the loss tail is heavier than the gain tail.
+
+![S&P 500 VaR during the 2008 crisis](figures/var_GSPC_2008.png)
+
+*All three models underestimated risk going into 2008, breached in clusters during the crisis, and then stayed overly conservative for two years while crisis days remained in the window.*
+
 ## Project structure
 
 ```
@@ -80,7 +104,7 @@ pytest                              # unit tests
 
 - [x] Data pipeline: download, cleaning, local cache
 - [x] Exploratory analysis and stylized facts
-- [ ] VaR/ES models: historical simulation, Normal, Student-t (rolling window)
+- [x] VaR/ES models: historical simulation, Normal, Student-t (rolling window)
 - [ ] VaR backtests: Kupiec, Christoffersen, Basel traffic light
 - [ ] GARCH(1,1) with Student-t innovations
 - [ ] ES backtest: Acerbi–Szekely
