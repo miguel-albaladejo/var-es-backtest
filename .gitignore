@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+*.egg-info/
+
+# Downloaded data (reproducible from the code)
+data/
+
+# macOS / editor
+.DS_Store
+.vscode/
