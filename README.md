@@ -85,7 +85,7 @@ breached on **1%** of days.
 
 ### Methodology
 
-Let $I_t = 1\{L_t > \mathrm{VaR}_t\}$ be the **exception (hit) sequence**.
+Let $I_t = \mathbf{1}_{\{L_t > \mathrm{VaR}_t\}}$ be the **exception (hit) sequence**.
 If the VaR model at confidence level $\alpha$ is correct, $I_t$ must satisfy two properties
 (Christoffersen, 1998):
 
