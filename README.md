@@ -65,6 +65,7 @@ breached on **1%** of days.
 | Historical simulation | 1.53% | 1.33% |
 | Normal | 2.48% | 1.95% |
 | Student-t | 1.58% | 1.49% |
+| EVT (POT-GPD, 90% threshold) | 1.53% | 1.19% |
 
 *S&P 500: 6,222 forecasts (2002–2026). IBEX 35: 6,300 forecasts (2002–2026).*
 
@@ -73,6 +74,8 @@ breached on **1%** of days.
 - **The Gaussian VaR breaches 2.5× more often than it should** on the S&P 500, a direct consequence of fat tails.
 - **Fixing the tails is not enough.** The Student-t improves on the Normal but not on historical simulation, and no model gets below 1.3%. The main problem is *dynamics*: a 500-day equally weighted window reacts too slowly to volatility changes.
 - **A symmetric Student-t can underperform historical simulation** (IBEX): returns are negatively skewed, so the loss tail is heavier than the gain tail.
+- **EVT fixes the asymmetry problem.** By modeling only the loss tail, EVT is the best model on the IBEX (1.19%), well ahead of the symmetric Student-t (1.49%).
+- **At 99% with a 500-day window, EVT ≈ historical simulation** (identical on the S&P 500): the 99% quantile still lies inside the data. EVT's advantage appears when extrapolating further into the tail (99.9% VaR, Expected Shortfall).
 
 ![S&P 500 VaR during the 2008 crisis](figures/var_GSPC_2008.png)
 
@@ -104,7 +107,7 @@ pytest                              # unit tests
 
 - [x] Data pipeline: download, cleaning, local cache
 - [x] Exploratory analysis and stylized facts
-- [x] VaR/ES models: historical simulation, Normal, Student-t (rolling window)
+- [x] VaR/ES models: historical simulation, Normal, Student-t (rolling window), EVT
 - [ ] VaR backtests: Kupiec, Christoffersen, Basel traffic light
 - [ ] GARCH(1,1) with Student-t innovations
 - [ ] ES backtest: Acerbi–Szekely
