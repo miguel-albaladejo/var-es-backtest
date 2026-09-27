@@ -81,6 +81,103 @@ breached on **1%** of days.
 
 *All three models underestimated risk going into 2008, breached in clusters during the crisis, and then stayed overly conservative for two years while crisis days remained in the window.*
 
+## Formal backtests
+
+### Methodology
+
+Let $I_t = \mathbf{1}\{L_t > \mathrm{VaR}_t\}$ be the **exception (hit) sequence**.
+If the VaR model at confidence level $\alpha$ is correct, $I_t$ must satisfy two properties
+(Christoffersen, 1998):
+
+1. **Unconditional coverage:** $P(I_t = 1) = p$, with $p = 1 - \alpha$.
+2. **Independence:** $I_t$ is independent of $I_{t-1}, I_{t-2}, \dots$, so exceptions do not cluster in time.
+
+Together, they mean that $I_t \overset{iid}{\sim} \mathrm{Bernoulli}(p)$.
+
+#### Kupiec (1995): proportion-of-failures test
+
+With $x$ exceptions in $n$ days and observed rate $\hat\pi = x/n$, the test compares
+
+$$
+H_0: P(I_t = 1) = p \qquad \text{vs.} \qquad H_1: P(I_t = 1) \neq p
+$$
+
+through the likelihood ratio of two binomial models:
+
+$$
+LR_{uc} = -2 \ln \frac{(1-p)^{\,n-x}\; p^{\,x}}{(1-\hat\pi)^{\,n-x}\; \hat\pi^{\,x}} \;\overset{H_0}{\sim}\; \chi^2_1
+$$
+
+The test is **two-sided**: it rejects models with too many exceptions (risk underestimated)
+and with too few (overly conservative, which ties up unnecessary capital).
+Its limitation is that it only counts exceptions and ignores *when* they occur.
+
+#### Christoffersen (1998): independence and conditional coverage
+
+The hit sequence is modelled as a first-order Markov chain. Let $n_{ij}$ be the number of days
+with $I_{t-1} = i$ and $I_t = j$, and define
+
+$$
+\pi_{01} = \frac{n_{01}}{n_{00} + n_{01}}, \qquad
+\pi_{11} = \frac{n_{11}}{n_{10} + n_{11}}, \qquad
+\pi = \frac{n_{01} + n_{11}}{n_{00} + n_{01} + n_{10} + n_{11}}
+$$
+
+where $\pi_{01}$ is the probability of an exception after a normal day and $\pi_{11}$ the
+probability of an exception right after another exception. Under independence,
+$\pi_{01} = \pi_{11} = \pi$:
+
+$$
+LR_{ind} = -2 \ln \frac{(1-\pi)^{\,n_{00}+n_{10}}\; \pi^{\,n_{01}+n_{11}}}
+{(1-\pi_{01})^{\,n_{00}}\; \pi_{01}^{\,n_{01}}\; (1-\pi_{11})^{\,n_{10}}\; \pi_{11}^{\,n_{11}}}
+\;\overset{H_0}{\sim}\; \chi^2_1
+$$
+
+The **conditional coverage** test checks both properties at once:
+
+$$
+LR_{cc} = LR_{uc} + LR_{ind} \;\overset{H_0}{\sim}\; \chi^2_2
+$$
+
+A model can pass Kupiec and still fail this test, if the right number of exceptions all happen
+during the same crisis.
+
+#### Basel traffic light
+
+Banking supervisors count the 99% VaR exceptions over the last 250 trading days
+(Basel Committee on Banking Supervision, 1996):
+
+| Zone | Exceptions in 250 days | Capital multiplier |
+|---|---|---|
+| Green | 0–4 | 3 |
+| Yellow | 5–9 | 3.40 – 3.85 |
+| Red | 10 or more | 4 (model under review) |
+
+Market-risk capital is roughly *multiplier × average VaR*, so every move into the yellow or
+red zone has a direct capital cost for the bank.
+
+### Results
+
+| | S&P 500 | | | IBEX 35 | | |
+|---|---|---|---|---|---|---|
+| **Model** | **Kupiec p** | **Indep. p** | **Time in red** | **Kupiec p** | **Indep. p** | **Time in red** |
+| Historical | <0.001 | <0.001 | 11.6% | 0.011 | <0.001 | 8.0% |
+| Normal | <0.001 | <0.001 | 29.1% | <0.001 | <0.001 | 14.5% |
+| Student-t | <0.001 | <0.001 | 15.3% | <0.001 | <0.001 | 8.0% |
+| EVT (POT-GPD) | <0.001 | <0.001 | 11.8% | **0.14** | <0.001 | 5.5% |
+
+*Kupiec: correct number of exceptions. Independence: Christoffersen (1998).
+Time in red: share of days with 10+ exceptions in the last 250 days (Basel).*
+
+**Key takeaways**
+
+- **Only one model out of eight passes the Kupiec test** (EVT on the IBEX), and it still fails the independence test.
+- **All models fail independence.** After a VaR breach, the probability of another breach jumps from ~1.3% to ~9.5%, regardless of the model. Better tails fix the *count* of exceptions, not their *clustering*.
+- **The regulatory cost is large.** The Gaussian VaR would have been in the Basel red zone 29% of the time on the S&P 500, with up to 29 exceptions in a single year (vs. a maximum of 4 for the green zone).
+- **Conclusion:** unconditional models with an equally weighted 500-day window cannot react to volatility regimes. Conditional volatility (GARCH) is needed.
+
+![Basel traffic light, S&P 500](figures/basel_GSPC.png)
+
 ## Project structure
 
 ```
@@ -108,7 +205,7 @@ pytest                              # unit tests
 - [x] Data pipeline: download, cleaning, local cache
 - [x] Exploratory analysis and stylized facts
 - [x] VaR/ES models: historical simulation, Normal, Student-t (rolling window), EVT
-- [ ] VaR backtests: Kupiec, Christoffersen, Basel traffic light
+- [x] VaR backtests: Kupiec, Christoffersen, Basel traffic light
 - [ ] GARCH(1,1) with Student-t innovations
 - [ ] ES backtest: Acerbi–Szekely
 - [ ] Crisis analysis (2008, 2020, 2022) and final results
