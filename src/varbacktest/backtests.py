@@ -12,6 +12,7 @@ used in practice by banking supervisors.
 """
 
 import numpy as np
+import pandas as pd
 from scipy import stats
 from scipy.special import xlogy
 
@@ -140,3 +141,52 @@ def christoffersen_test(exceptions: np.ndarray, alpha: float = 0.99) -> dict:
         "lr_cc": float(lr_cc),
         "p_cc": float(p_cc),
     }
+
+
+# Basel plus factor added to the capital multiplier (base 3), by number of
+# exceptions in the last 250 days (Basel Committee, 1996).
+BASEL_PLUS_FACTOR = {
+    0: 0.0,
+    1: 0.0,
+    2: 0.0,
+    3: 0.0,
+    4: 0.0,
+    5: 0.40,
+    6: 0.50,
+    7: 0.65,
+    8: 0.75,
+    9: 0.85,
+}
+
+
+def basel_traffic_light(exceptions: pd.Series, window: int = 250) -> pd.DataFrame:
+    """
+    Basel traffic-light zone of a 99% VaR model, day by day.
+
+    On each day, the supervisor counts the VaR exceptions over the last
+    `window` trading days (250 = one year, including the current day):
+
+        Green   0-4 exceptions   model accepted, capital multiplier 3
+        Yellow  5-9 exceptions   multiplier 3 + plus factor (0.40 to 0.85)
+        Red     10+ exceptions   multiplier 4, model under review
+
+    Parameters
+    ----------
+    exceptions : pd.Series
+        Exception sequence I_t (0/1 or bool) indexed by date.
+    window : int
+        Number of trading days in the regulatory look-back window.
+
+    Returns
+    -------
+    pd.DataFrame
+        Indexed by date (from the first full window on), with columns
+        "count" (exceptions in the window), "zone" ("green", "yellow" or
+        "red") and "multiplier" (3 + plus factor).
+    """
+    count = exceptions.astype(int).rolling(window).sum().dropna().astype(int)
+    zone = pd.cut(count, bins=[-1, 4, 9, np.inf], labels=["green", "yellow", "red"])
+    multiplier = 3 + count.map(lambda c: BASEL_PLUS_FACTOR.get(c, 1.0))
+    return pd.DataFrame(
+        {"count": count, "zone": zone.astype(str), "multiplier": multiplier}
+    )
