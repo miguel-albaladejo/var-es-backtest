@@ -22,6 +22,8 @@ MODELS = {
     "norm": "Normal",
     "t": "Student-t",
     "evt": "EVT (POT-GPD)",
+    "garch_t": "GARCH-t",
+    "garch_evt": "GARCH-EVT",
 }
 TICKERS = ["^GSPC", "^IBEX"]
 

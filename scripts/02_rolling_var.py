@@ -10,11 +10,22 @@ import pandas as pd
 from varbacktest.data import load_prices, log_returns, to_losses
 from varbacktest.forecast import rolling_var_es
 from varbacktest.models import (
+    evt_var_es,
+    garch_evt_var_es,
+    garch_t_var_es,
     historical_var_es,
     normal_var_es,
     student_t_var_es,
-    evt_var_es,
 )
+
+MODELS = {
+    "hist": ("Historical", historical_var_es),
+    "norm": ("Normal", normal_var_es),
+    "t": ("Student-t", student_t_var_es),
+    "evt": ("EVT (POT-GPD)", evt_var_es),
+    "garch_t": ("GARCH-t", garch_t_var_es),
+    "garch_evt": ("GARCH-EVT", garch_evt_var_es),
+}
 
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS_DIR = ROOT / "results"
@@ -22,12 +33,7 @@ FIG_DIR = ROOT / "figures"
 
 ALPHA = 0.99
 WINDOW = 500
-MODELS = {
-    "hist": ("Historical", historical_var_es),
-    "norm": ("Normal", normal_var_es),
-    "t": ("Student-t", student_t_var_es),
-    "evt": ("EVT (POT-GPD)", evt_var_es),
-}
+
 PERIODS = {"2008": ("2007", "2009"), "2020": ("2020", "2020")}
 
 
@@ -69,16 +75,28 @@ if __name__ == "__main__":
     for ticker in ["^GSPC", "^IBEX"]:
         loss = to_losses(log_returns(load_prices(ticker))).rename("loss")
 
-        # --- Rolling forecasts for every model ---
+        # --- Rolling forecasts for every model (reusing cached results) ---
+        out_file = RESULTS_DIR / f"forecasts_{ticker.replace('^', '')}.csv"
+        cached = (
+            pd.read_csv(out_file, index_col=0, parse_dates=True)
+            if out_file.exists()
+            else None
+        )
+
         forecasts = [loss]
         for key, (name, model) in MODELS.items():
+            cols = [f"var_{key}", f"es_{key}"]
+            if cached is not None and set(cols).issubset(cached.columns):
+                print(f"{ticker}: {name} loaded from {out_file.name}")
+                forecasts.append(cached[cols])
+                continue
             print(f"{ticker}: computing {name} VaR/ES...")
             out = rolling_var_es(loss, model, window=WINDOW, alpha=ALPHA)
             forecasts.append(out.add_suffix(f"_{key}"))
 
         # Drop the first WINDOW days, which have no forecast
         table = pd.concat(forecasts, axis=1).dropna()
-        table.to_csv(RESULTS_DIR / f"forecasts_{ticker.replace('^', '')}.csv")
+        table.to_csv(out_file)
 
         # --- Exception counts ---
         print(
