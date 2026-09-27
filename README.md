@@ -24,6 +24,100 @@ and Expected Shortfall is; this project tests **how** they behave on real data.
 - A VaR **exception** on day $t$ occurs when $L_t > \mathrm{VaR}_t$.
 - Forecasts for day $t$ only use information available up to day $t-1$ (no look-ahead bias).
 
+## Risk measures and models
+
+### VaR and Expected Shortfall
+
+Let $L$ be the one-day loss and $\alpha$ the confidence level (99% here):
+
+$$
+\mathrm{VaR}_\alpha(L) = \inf\{\,x : P(L \le x) \ge \alpha\,\} \qquad
+\mathrm{ES}_\alpha(L) = \mathbb{E}\left[\,L \mid L \ge \mathrm{VaR}_\alpha(L)\,\right]
+$$
+
+VaR is the loss exceeded only on $(1-\alpha)$ of days; ES is the average loss on those days.
+VaR is **not a coherent risk measure** (Artzner et al., 1999): it can fail sub-additivity, so
+diversification may appear to increase risk, and it says nothing about losses beyond the
+quantile. ES is coherent, and since Basel III (FRTB) it is the regulatory standard at 97.5%.
+In the notation of my thesis, $\mathrm{ES}_{\alpha}(L) = \mathrm{AVaR}_{1-\alpha}(X)$ for the position $X = -L$.
+
+All models produce **one-day-ahead forecasts from a rolling 500-day window**: the forecast for
+day $t$ uses only the losses of days $t-500, \dots, t-1$.
+
+### Unconditional models
+
+These models treat the 500 losses in the window as i.i.d. draws from a fixed distribution.
+
+**Historical simulation.** No distributional assumption: VaR is the empirical 99% quantile of
+the window, and ES the mean of the losses at or above it.
+
+**Normal.** $L \sim N(\mu, \sigma^2)$, with $\mu, \sigma$ estimated on the window.
+With $z_\alpha = \Phi^{-1}(\alpha)$:
+
+$$
+\mathrm{VaR}_\alpha = \mu + \sigma z_\alpha \qquad
+\mathrm{ES}_\alpha = \mu + \sigma\,\frac{\varphi(z_\alpha)}{1-\alpha}
+$$
+
+**Student-t.** $L = m + s\,T$ with $T \sim t_\nu$, fitted by maximum likelihood.
+With $q = t_\nu^{-1}(\alpha)$ and $f_\nu$ the $t_\nu$ density:
+
+$$
+\mathrm{VaR}_\alpha = m + s\,q \qquad
+\mathrm{ES}_\alpha = m + s\,\frac{f_\nu(q)}{1-\alpha}\cdot\frac{\nu + q^2}{\nu - 1}
+$$
+
+**Extreme Value Theory (peaks over threshold).** Instead of fitting the whole distribution,
+EVT models only the loss tail. By the Pickands–Balkema–de Haan theorem, the excesses over a
+high threshold $u$ converge to a Generalized Pareto Distribution:
+
+$$
+P(L - u \le y \mid L > u) \;\approx\; 1 - \left(1 + \frac{\xi y}{\beta}\right)^{-1/\xi}
+$$
+
+where $\xi$ is the tail index ($\xi > 0$: power-law tail; a Student-t with $\nu$ degrees of
+freedom has $\xi = 1/\nu$). With $u$ the 90% empirical quantile, $n$ observations and $N_u$
+excesses (Smith, 1987):
+
+$$
+\mathrm{VaR}_\alpha = u + \frac{\beta}{\xi}\left[\left(\frac{n}{N_u}(1-\alpha)\right)^{-\xi} - 1\right]
+\qquad
+\mathrm{ES}_\alpha = \frac{\mathrm{VaR}_\alpha + \beta - \xi u}{1 - \xi}
+$$
+
+The threshold is a bias–variance trade-off: too low and the GPD approximation fails, too
+high and too few excesses remain to estimate $\xi$ and $\beta$.
+
+### Conditional models
+
+Unconditional models give the same weight to a loss from 18 months ago as to yesterday's, so
+they react slowly when volatility changes. Conditional models let volatility depend on the
+recent past.
+
+**GARCH(1,1)** (Bollerslev, 1986):
+
+$$
+L_t = \mu + \sigma_t z_t, \qquad z_t \overset{iid}{\sim} (0,1), \qquad
+\sigma_t^2 = \omega + a\,\varepsilon_{t-1}^2 + b\,\sigma_{t-1}^2
+$$
+
+with $\varepsilon_t = L_t - \mu$. A large shock yesterday raises today's volatility (the
+$a$ term) and high volatility persists (the $b$ term), which reproduces volatility clustering.
+Given the one-day-ahead volatility forecast $\sigma_{t+1|t}$:
+
+$$
+\mathrm{VaR}_\alpha = \mu + \sigma_{t+1|t}\; q_\alpha(z) \qquad
+\mathrm{ES}_\alpha = \mu + \sigma_{t+1|t}\; \mathrm{ES}_\alpha(z)
+$$
+
+**GARCH-t.** $z_t$ follows a Student-t rescaled to unit variance, so $q_\alpha(z)$ and
+$\mathrm{ES}_\alpha(z)$ are the Student-t formulas above multiplied by $\sqrt{(\nu-2)/\nu}$.
+
+**GARCH-filtered EVT** (McNeil & Frey, 2000). The GARCH model is fitted first, and EVT is then
+applied to the standardized residuals $\hat z_t = (L_t - \hat\mu)/\hat\sigma_t$, which are much
+closer to i.i.d. than raw losses. GARCH captures the **dynamics** of risk and EVT the **shape
+of the tail**.
+
 ## Stylized facts
 
 |                        |        S&P 500      |       IBEX 35       |
@@ -164,17 +258,19 @@ red zone has a direct capital cost for the bank.
 | Historical | <0.001 | <0.001 | 11.6% | 0.011 | <0.001 | 8.0% |
 | Normal | <0.001 | <0.001 | 29.1% | <0.001 | <0.001 | 14.5% |
 | Student-t | <0.001 | <0.001 | 15.3% | <0.001 | <0.001 | 8.0% |
-| EVT (POT-GPD) | <0.001 | <0.001 | 11.8% | **0.14** | <0.001 | 5.5% |
+| EVT (POT-GPD) | <0.001 | <0.001 | 11.8% | 0.14 | <0.001 | 5.5% |
+| GARCH-t | <0.001 | 0.12 | 1.6% | <0.001 | 0.068 | 2.3% |
+| **GARCH-EVT** | **0.40** | 0.008 | **0%** | **0.45** | **0.23** | **0%** |
 
 *Kupiec: correct number of exceptions. Independence: Christoffersen (1998).
 Time in red: share of days with 10+ exceptions in the last 250 days (Basel).*
 
+
 **Key takeaways**
 
-- **Only one model out of eight passes the Kupiec test** (EVT on the IBEX), and it still fails the independence test.
-- **All models fail independence.** After a VaR breach, the probability of another breach jumps from ~1.3% to ~9.5%, regardless of the model. Better tails fix the *count* of exceptions, not their *clustering*.
-- **The regulatory cost is large.** The Gaussian VaR would have been in the Basel red zone 29% of the time on the S&P 500, with up to 29 exceptions in a single year (vs. a maximum of 4 for the green zone).
-- **Conclusion:** unconditional models with an equally weighted 500-day window cannot react to volatility regimes. Conditional volatility (GARCH) is needed.
+- **Unconditional models fail independence.** With an equally weighted 500-day window, the probability of a breach right after another breach jumps from ~1.3% to ~9.5%, whatever the distribution.
+- **GARCH fixes the clustering.** Conditional volatility cuts that probability to 3–6% and the independence test stops rejecting. But the symmetric GARCH-t still breaches too often (1.5–1.6%): its loss tail is too thin.
+- **EVT fixes the count, GARCH fixes the timing: you need both.** GARCH-filtered EVT (McNeil & Frey, 2000) is the only model that passes the Kupiec test on both indices, passes all three tests on the IBEX, and **never enters the Basel red zone** — compared with 29% of days for the Gaussian VaR on the S&P 500.
 
 ![Basel traffic light, S&P 500](figures/basel_GSPC.png)
 
@@ -206,6 +302,6 @@ pytest                              # unit tests
 - [x] Exploratory analysis and stylized facts
 - [x] VaR/ES models: historical simulation, Normal, Student-t (rolling window), EVT
 - [x] VaR backtests: Kupiec, Christoffersen, Basel traffic light
-- [ ] GARCH(1,1) with Student-t innovations
+- [x] GARCH(1,1) with Student-t innovations
 - [ ] ES backtest: Acerbi–Szekely
 - [ ] Crisis analysis (2008, 2020, 2022) and final results
