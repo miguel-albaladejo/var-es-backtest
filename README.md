@@ -258,6 +258,30 @@ Banking supervisors count the 99% VaR exceptions over the last 250 trading days
 Market-risk capital is roughly *multiplier × average VaR*, so every move into the yellow or
 red zone has a direct capital cost for the bank.
 
+#### Acerbi & Szekely (2014): Expected Shortfall backtest
+
+ES is not elicitable (Gneiting, 2011), so it cannot be backtested like VaR. Acerbi and
+Szekely showed it can still be tested using the identity that holds for a correct model:
+
+$$
+\mathbb{E}\left[L_t\, I_t\right] = p \cdot \mathrm{ES}_t
+$$
+
+Two statistics, both equal to 0 in expectation under $H_0$ and negative when tail risk is
+underestimated:
+
+$$
+Z_1 = 1 - \frac{1}{N}\sum_{t:\,I_t=1} \frac{L_t}{\mathrm{ES}_t}
+\qquad
+Z_2 = 1 - \frac{1}{T}\sum_{t=1}^{T} \frac{L_t\, I_t}{p\,\mathrm{ES}_t}
+$$
+
+$Z_1$ checks the *size* of losses on exception days ($N$ = number of exceptions); $Z_2$ jointly
+checks their *frequency and size*. The one-sided p-value of $Z_2$ uses a CLT approximation,
+$Z_2 \sqrt{T} / \hat s \approx N(0,1)$, with $\hat s$ the standard deviation of
+$L_t I_t / (p\,\mathrm{ES}_t)$. In simulations this test is well sized (3.8% rejections at 5%
+under a correct model) but has limited power with ~60 exceptions.
+
 ### Results
 
 | | S&P 500 | | | IBEX 35 | | |
@@ -273,12 +297,26 @@ red zone has a direct capital cost for the bank.
 *Kupiec: correct number of exceptions. Independence: Christoffersen (1998).
 Time in red: share of days with 10+ exceptions in the last 250 days (Basel).*
 
+**Expected Shortfall backtest (Acerbi–Szekely $Z_2$)**
+
+| | S&P 500 | | IBEX 35 | |
+|---|---|---|---|---|
+| **Model** | **Loss / ES on breach days** | **$Z_2$ p-value** | **Loss / ES on breach days** | **$Z_2$ p-value** |
+| Historical | 1.09 | <0.001 | 1.07 | 0.006 |
+| Normal | **1.32** | <0.001 | **1.30** | <0.001 |
+| Student-t | 0.92 | 0.002 | 1.12 | <0.001 |
+| EVT (POT-GPD) | 1.10 | <0.001 | 1.14 | 0.018 |
+| GARCH-t | 1.02 | <0.001 | 1.09 | <0.001 |
+| **GARCH-EVT** | 1.06 | **0.115** | 1.10 | **0.092** |
+
+*Loss / ES = average realized loss on VaR-breach days divided by the predicted ES (1 if correct).*
 
 **Key takeaways**
 
 - **Unconditional models fail independence.** With an equally weighted 500-day window, the probability of a breach right after another breach jumps from ~1.3% to ~9.5%, whatever the distribution.
 - **GARCH fixes the clustering.** Conditional volatility cuts that probability to 3–6% and the independence test stops rejecting. But the symmetric GARCH-t still breaches too often (1.5–1.6%): its loss tail is too thin.
 - **EVT fixes the count, GARCH fixes the timing: you need both.** GARCH-filtered EVT (McNeil & Frey, 2000) is the only model that passes the Kupiec test on both indices, passes all three tests on the IBEX, and **never enters the Basel red zone** — compared with 29% of days for the Gaussian VaR on the S&P 500.
+- **Expected Shortfall: size is mostly right, frequency is not.** On breach days, realized losses are within 2–14% of the predicted ES for most models, so Z2 rejections are driven mainly by too many exceptions. The Gaussian ES fails on both counts, underestimating tail losses by ~30%. GARCH-EVT is the only model whose ES is not rejected on either index.
 
 ![Basel traffic light, S&P 500](figures/basel_GSPC.png)
 
@@ -309,6 +347,6 @@ pytest                              # unit tests
 - [x] VaR/ES models: historical simulation, Normal, Student-t, EVT (rolling window)
 - [x] VaR backtests: Kupiec, Christoffersen, Basel traffic light
 - [x] GARCH(1,1)-t and GARCH-filtered EVT
-- [ ] ES backtest: Acerbi–Szekely
+- [x] ES backtest: Acerbi–Szekely
 - [ ] Crisis analysis (2008, 2020, 2022) and final results
 - [ ] Extension: asymmetric GJR-GARCH (leverage effect)
