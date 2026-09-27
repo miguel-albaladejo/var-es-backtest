@@ -323,6 +323,56 @@ Time in red: share of days with 10+ exceptions in the last 250 days (Basel).*
 
 *Each point is a VaR-breach day. If the ES forecast is correct, points scatter around the red line. Unconditional models predict an almost constant ES, so crisis losses shoot vertically above it; GARCH-EVT's ES rises with volatility and its breach losses stay close to the diagonal.*
 
+## Crisis analysis and final results
+
+### Exceptions in crisis periods (99% VaR, observed / expected)
+
+| S&P 500 | Historical | Normal | Student-t | EVT | GARCH-t | GARCH-EVT |
+|---|---|---|---|---|---|---|
+| GFC (Sep 2008 – Jun 2009) | 16 / 2.1 | 21 / 2.1 | 14 / 2.1 | 15 / 2.1 | 4 / 2.1 | **2 / 2.1** |
+| Euro crisis (H2 2011) | 5 / 1.3 | 9 / 1.3 | 4 / 1.3 | 4 / 1.3 | 3 / 1.3 | **2 / 1.3** |
+| COVID (Feb – Jun 2020) | 10 / 0.9 | 13 / 0.9 | 12 / 0.9 | 10 / 0.9 | 3 / 0.9 | **2 / 0.9** |
+| Rate hikes (2022) | 7 / 2.5 | 12 / 2.5 | 11 / 2.5 | 8 / 2.5 | 3 / 2.5 | **2 / 2.5** |
+| Calm year (2017) | 0 / 2.5 | 0 / 2.5 | 0 / 2.5 | 0 / 2.5 | 2 / 2.5 | **2 / 2.5** |
+
+| IBEX 35 | Historical | Normal | Student-t | EVT | GARCH-t | GARCH-EVT |
+|---|---|---|---|---|---|---|
+| GFC (Sep 2008 – Jun 2009) | 10 / 2.1 | 14 / 2.1 | 9 / 2.1 | 8 / 2.1 | 1 / 2.1 | **0 / 2.1** |
+| Euro crisis (H2 2011) | 3 / 1.3 | 7 / 1.3 | 5 / 1.3 | 4 / 1.3 | 1 / 1.3 | **1 / 1.3** |
+| COVID (Feb – Jun 2020) | 13 / 0.9 | 16 / 0.9 | 16 / 0.9 | 11 / 0.9 | 5 / 0.9 | **3 / 0.9** |
+| Rate hikes (2022) | 3 / 2.6 | 4 / 2.6 | 2 / 2.6 | 2 / 2.6 | 5 / 2.6 | 5 / 2.6 |
+| Calm year (2017) | 0 / 2.5 | 0 / 2.5 | 0 / 2.5 | 0 / 2.5 | 1 / 2.5 | **1 / 2.5** |
+
+![VaR in the 2008 and 2020 crises, S&P 500](figures/crisis_GSPC.png)
+
+- **In crises, unconditional models breach 7–18× more often than expected**, while GARCH-EVT stays close to target (2 vs. 2.1 in 2008 on the S&P 500; 0 on the IBEX).
+- **In calm periods they are overly conservative**: zero breaches in 2017, as the 500-day window still contains the 2015–2016 volatility.
+- **GARCH is not perfect.** In the fastest shock on record (COVID) it still needed a few days to react, and in 2022 on the IBEX it was caught with a low VaR after a very calm 2021 — its fast reaction works in both directions.
+
+### Basel capital charge
+
+Market-risk capital under the Basel internal-models approach (without the stressed-VaR add-on):
+
+$$
+\text{capital}_t = \max\left(\mathrm{VaR}_t,\; m_t \cdot \overline{\mathrm{VaR}}_{t,\,60\text{d}}\right)
+$$
+
+where $m_t \in [3, 4]$ is the traffic-light multiplier.
+
+| Model | Tests passed (S&P / IBEX) | Avg. capital S&P 500 | Avg. capital IBEX 35 |
+|---|---|---|---|
+| Historical | 0/3 · 0/3 | 10.36% | 10.93% |
+| Normal | 0/3 · 0/3 | 8.88% | 10.11% |
+| Student-t | 0/3 · 0/3 | 10.61% | 11.18% |
+| EVT (POT-GPD) | 0/3 · 1/3 | 10.62% | 11.43% |
+| GARCH-t | 1/3 · 1/3 | 8.19% | 9.65% |
+| **GARCH-EVT** | **2/3 · 3/3** | **8.72%** | **10.24%** |
+
+*Tests: Kupiec, Christoffersen independence and Acerbi–Szekely Z2, at 5%.*
+
+- **Conditional models are both safer and cheaper.** GARCH-EVT requires **16% less capital than historical simulation on the S&P 500** (6% on the IBEX) while passing more tests: it raises VaR in crises and lowers it in calm periods, putting capital where the risk is.
+- **A cheap VaR that fails ends up expensive.** The Normal model has the lowest average VaR among unconditional models, but its time in the red zone (multiplier 4) makes its capital charge higher than GARCH-EVT's on the S&P 500.
+
 ## Project structure
 
 ```
@@ -340,6 +390,7 @@ data/              local price cache (not tracked by git)
 python scripts/01_explore_data.py   # stylized facts table and figures
 python scripts/02_rolling_var.py    # rolling VaR/ES forecasts (slow: MLE fits on ~6,200 windows)
 python scripts/03_backtests.py      # Kupiec, Christoffersen and Basel backtests
+python scripts/04_crisis.py  # crisis tables, capital charge and final scorecard
 pytest                              # unit tests
 ```
 
