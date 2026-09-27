@@ -9,6 +9,12 @@ This project is the empirical counterpart of my BSc Mathematics thesis,
 measures. The thesis explains **why** VaR is not a coherent risk measure
 and Expected Shortfall is; this project tests **how** they behave on real data.
 
+## Key findings
+
+- **The Gaussian VaR fails badly.** On the S&P 500 it is breached on 2.5% of days instead of 1%, and it would have been in the Basel red zone 29% of the time.
+- **Fat tails fix the *number* of breaches; conditional volatility fixes their *timing*.** Without GARCH, the probability of a breach right after another breach is ~9.5% instead of 1%.
+- **Only GARCH-filtered EVT passes the backtests**: it passes the Kupiec test on both indices, all three tests on the IBEX 35, and never enters the Basel red zone over 2002–2026 (including 2008 and 2020).
+
 > Work in progress — see [Roadmap](#roadmap).
 
 ## Data
@@ -160,20 +166,22 @@ breached on **1%** of days.
 | Normal | 2.48% | 1.95% |
 | Student-t | 1.58% | 1.49% |
 | EVT (POT-GPD, 90% threshold) | 1.53% | 1.19% |
+| GARCH-t | 1.64% | 1.49% |
+| **GARCH-EVT** | **1.11%** | **1.10%** |
 
 *S&P 500: 6,222 forecasts (2002–2026). IBEX 35: 6,300 forecasts (2002–2026).*
 
 **Key takeaways**
 
 - **The Gaussian VaR breaches 2.5× more often than it should** on the S&P 500, a direct consequence of fat tails.
-- **Fixing the tails is not enough.** The Student-t improves on the Normal but not on historical simulation, and no model gets below 1.3%. The main problem is *dynamics*: a 500-day equally weighted window reacts too slowly to volatility changes.
+- **Fixing the tails is not enough.** The Student-t improves on the Normal but not on historical simulation, and no unconditional model gets close to 1% on both indices. The main problem is *dynamics*: a 500-day equally weighted window reacts too slowly to volatility changes.
 - **A symmetric Student-t can underperform historical simulation** (IBEX): returns are negatively skewed, so the loss tail is heavier than the gain tail.
 - **EVT fixes the asymmetry problem.** By modeling only the loss tail, EVT is the best model on the IBEX (1.19%), well ahead of the symmetric Student-t (1.49%).
 - **At 99% with a 500-day window, EVT ≈ historical simulation** (identical on the S&P 500): the 99% quantile still lies inside the data. EVT's advantage appears when extrapolating further into the tail (99.9% VaR, Expected Shortfall).
 
 ![S&P 500 VaR during the 2008 crisis](figures/var_GSPC_2008.png)
 
-*All three models underestimated risk going into 2008, breached in clusters during the crisis, and then stayed overly conservative for two years while crisis days remained in the window.*
+*Unconditional models (historical, Normal, Student-t, EVT) underestimated risk going into 2008, breached in clusters during the crisis, and then stayed overly conservative for two years while crisis days remained in the window. GARCH-based models react within days in both directions. Red dots: exceptions of historical simulation.*
 
 ## Formal backtests
 
@@ -277,9 +285,10 @@ Time in red: share of days with 10+ exceptions in the last 250 days (Basel).*
 ## Project structure
 
 ```
-src/varbacktest/   library code (data, models, backtests)
+src/varbacktest/   library code (data, models, forecast engine, backtests)
 tests/             unit tests (pytest)
 scripts/           analysis scripts that produce tables and figures
+results/           rolling forecasts and backtest tables (CSV)
 figures/           generated charts
 data/              local price cache (not tracked by git)
 ```
@@ -287,12 +296,9 @@ data/              local price cache (not tracked by git)
 ## How to run
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-pip install -e .
-
 python scripts/01_explore_data.py   # stylized facts table and figures
+python scripts/02_rolling_var.py    # rolling VaR/ES forecasts (slow: MLE fits on ~6,200 windows)
+python scripts/03_backtests.py      # Kupiec, Christoffersen and Basel backtests
 pytest                              # unit tests
 ```
 
@@ -300,8 +306,9 @@ pytest                              # unit tests
 
 - [x] Data pipeline: download, cleaning, local cache
 - [x] Exploratory analysis and stylized facts
-- [x] VaR/ES models: historical simulation, Normal, Student-t (rolling window), EVT
+- [x] VaR/ES models: historical simulation, Normal, Student-t, EVT (rolling window)
 - [x] VaR backtests: Kupiec, Christoffersen, Basel traffic light
-- [x] GARCH(1,1) with Student-t innovations
+- [x] GARCH(1,1)-t and GARCH-filtered EVT
 - [ ] ES backtest: Acerbi–Szekely
 - [ ] Crisis analysis (2008, 2020, 2022) and final results
+- [ ] Extension: asymmetric GJR-GARCH (leverage effect)
