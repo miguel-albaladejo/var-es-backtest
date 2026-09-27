@@ -54,7 +54,7 @@ and Expected Shortfall is; this project tests **how** they behave on real data.
 
 ![Return distribution vs Normal](figures/histogram.png)
 
-## Rolling VaR forecasts (step 2)
+## Rolling VaR forecasts
 
 One-day 99% VaR and ES forecasts with a 500-day rolling window. The forecast
 for day *t* only uses losses up to *t − 1*. A correct 99% VaR should be
