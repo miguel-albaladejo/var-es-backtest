@@ -85,7 +85,7 @@ breached on **1%** of days.
 
 ### Methodology
 
-Let $I_t = \mathbf{1}\{L_t > \mathrm{VaR}_t\}$ be the **exception (hit) sequence**.
+Let $I_t = 1\{L_t > \mathrm{VaR}_t\}$ be the **exception (hit) sequence**.
 If the VaR model at confidence level $\alpha$ is correct, $I_t$ must satisfy two properties
 (Christoffersen, 1998):
 
@@ -105,7 +105,7 @@ $$
 through the likelihood ratio of two binomial models:
 
 $$
-LR_{uc} = -2 \ln \frac{(1-p)^{\,n-x}\; p^{\,x}}{(1-\hat\pi)^{\,n-x}\; \hat\pi^{\,x}} \;\overset{H_0}{\sim}\; \chi^2_1
+LR_{uc} = -2 \ln \frac{(1-p)^{n-x} p^{x}}{(1-\hat\pi)^{n-x} \hat\pi^{x}} \overset{H_0}{\sim} \chi^2_1
 $$
 
 The test is **two-sided**: it rejects models with too many exceptions (risk underestimated)
@@ -128,15 +128,15 @@ probability of an exception right after another exception. Under independence,
 $\pi_{01} = \pi_{11} = \pi$:
 
 $$
-LR_{ind} = -2 \ln \frac{(1-\pi)^{\,n_{00}+n_{10}}\; \pi^{\,n_{01}+n_{11}}}
-{(1-\pi_{01})^{\,n_{00}}\; \pi_{01}^{\,n_{01}}\; (1-\pi_{11})^{\,n_{10}}\; \pi_{11}^{\,n_{11}}}
-\;\overset{H_0}{\sim}\; \chi^2_1
+LR_{ind} = -2 \ln \frac{(1-\pi)^{n_{00}+n_{10}} \pi^{n_{01}+n_{11}}}
+{(1-\pi_{01})^{n_{00}} \pi_{01}^{n_{01}} (1-\pi_{11})^{n_{10}} \pi_{11}^{n_{11}}}
+\overset{H_0}{\sim} \chi^2_1
 $$
 
 The **conditional coverage** test checks both properties at once:
 
 $$
-LR_{cc} = LR_{uc} + LR_{ind} \;\overset{H_0}{\sim}\; \chi^2_2
+LR_{cc} = LR_{uc} + LR_{ind} \overset{H_0}{\sim} \chi^2_2
 $$
 
 A model can pass Kupiec and still fail this test, if the right number of exceptions all happen
