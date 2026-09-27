@@ -109,6 +109,43 @@ def plot_basel_counts(forecasts: pd.DataFrame, ticker: str) -> None:
     plt.close(fig)
 
 
+def plot_es_on_breaches(forecasts: pd.DataFrame, ticker: str) -> None:
+    """Scatter of realized loss vs predicted ES on VaR-breach days, one panel per model.
+
+    If the ES forecast is correct, points scatter around the 45-degree line
+    (realized loss = predicted ES). Points above the line are breach days on
+    which the loss exceeded the predicted ES (tail risk underestimated).
+    """
+    fig, axes = plt.subplots(2, 3, figsize=(12, 8), sharex=True, sharey=True)
+    breach_losses = []
+    for ax, (key, name) in zip(axes.flat, MODELS.items()):
+        hits = forecasts["loss"] > forecasts[f"var_{key}"]
+        es = 100 * forecasts.loc[hits, f"es_{key}"]
+        loss = 100 * forecasts.loc[hits, "loss"]
+        breach_losses.append(loss.max())
+        ratio = (loss / es).mean()
+        ax.scatter(es, loss, s=14, alpha=0.6)
+        ax.set_title(
+            f"{name}: {hits.sum()} breaches, mean loss/ES = {ratio:.2f}", fontsize=9
+        )
+
+    top = max(breach_losses) * 1.05
+    for ax in axes.flat:
+        ax.plot([0, top], [0, top], color="red", linewidth=1, label="Loss = ES")
+        ax.set_xlim(0, top)
+        ax.set_ylim(0, top)
+    for ax in axes[1]:
+        ax.set_xlabel("Predicted ES (%)")
+    for ax in axes[:, 0]:
+        ax.set_ylabel("Realized loss (%)")
+    axes[0, 0].legend(loc="upper left", fontsize=8)
+
+    fig.suptitle(f"{ticker}: realized loss vs predicted 99% ES on VaR-breach days")
+    fig.tight_layout()
+    fig.savefig(FIG_DIR / f"es_breaches_{ticker.replace('^', '')}.png", dpi=150)
+    plt.close(fig)
+
+
 if __name__ == "__main__":
     FIG_DIR.mkdir(exist_ok=True)
     pd.set_option("display.width", 200)
@@ -130,3 +167,4 @@ if __name__ == "__main__":
         print(table.to_string(float_format=lambda v: f"{v:.3g}"))
 
         plot_basel_counts(forecasts, ticker)
+        plot_es_on_breaches(forecasts, ticker)

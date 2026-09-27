@@ -319,6 +319,9 @@ Time in red: share of days with 10+ exceptions in the last 250 days (Basel).*
 - **Expected Shortfall: size is mostly right, frequency is not.** On breach days, realized losses are within 2–14% of the predicted ES for most models, so Z2 rejections are driven mainly by too many exceptions. The Gaussian ES fails on both counts, underestimating tail losses by ~30%. GARCH-EVT is the only model whose ES is not rejected on either index.
 
 ![Basel traffic light, S&P 500](figures/basel_GSPC.png)
+![Realized loss vs predicted ES on breach days, S&P 500](figures/es_breaches_GSPC.png)
+
+*Each point is a VaR-breach day. If the ES forecast is correct, points scatter around the red line. Unconditional models predict an almost constant ES, so crisis losses shoot vertically above it; GARCH-EVT's ES rises with volatility and its breach losses stay close to the diagonal.*
 
 ## Project structure
 
