@@ -89,3 +89,79 @@ def student_t_var_es(losses: np.ndarray, alpha: float = 0.99) -> tuple[float, fl
     var = m + s * q
     es = m + s * f * (nu + q**2) / ((1 - alpha) * (nu - 1))
     return (float(var), float(es))
+
+
+def evt_var_es(
+    losses: np.ndarray,
+    alpha: float = 0.99,
+    threshold_quantile: float = 0.90,
+) -> tuple[float, float]:
+    """
+    VaR and ES with Extreme Value Theory (peaks over threshold).
+
+    Extreme Value Theory models only the tail of the loss distribution.
+    By the Pickands-Balkema-de Haan theorem, the excesses over a high
+    threshold u converge to a Generalized Pareto Distribution (GPD):
+
+        F_u(y) = P(L - u <= y | L > u) ~ G(y) = 1 - (1 + xi * y / beta)^(-1/xi)
+
+    where beta > 0 is the scale and xi is the shape (tail index):
+    xi > 0 heavy (power-law) tail, xi = 0 exponential tail (e.g. Normal),
+    xi < 0 bounded tail.
+
+    With n losses in the window and N_u of them above u (Smith, 1987):
+
+        VaR = u + (beta / xi) * [ (n / N_u * (1 - alpha))^(-xi) - 1 ]
+        ES  = (VaR + beta - xi * u) / (1 - xi),          valid for xi < 1
+
+    and, in the limit xi -> 0 (exponential tail):
+
+        VaR = u + beta * ln( N_u / (n * (1 - alpha)) )
+        ES  = VaR + beta
+
+    Choice of threshold (bias-variance trade-off): a low u includes
+    non-extreme losses, where the GPD approximation is poor (bias); a high u
+    leaves too few excesses to estimate xi and beta (variance). By default
+    u is the 90% empirical quantile of the window: 50 excesses out of 500.
+
+    Parameters
+    ----------
+    losses : np.ndarray
+        Losses in the estimation window.
+    alpha : float
+        Confidence level.
+    threshold_quantile : float
+        Quantile of the losses used as threshold u.
+
+    Returns
+    -------
+    (var, es) : tuple[float, float]
+        Value-at-Risk and Expected Shortfall at level alpha.
+
+    Raises
+    ------
+    ValueError
+        If the fitted xi >= 1, since the ES is then infinite.
+    """
+    losses = np.asarray(losses)
+    n = len(losses)
+
+    u = np.quantile(losses, threshold_quantile)
+    excesses = losses[losses > u] - u
+    n_u = len(excesses)
+
+    xi, _, beta = stats.genpareto.fit(excesses, floc=0)
+
+    if xi >= 1:
+        raise ValueError(f"xi = {xi:.3f} >= 1: the Expected Shortfall is infinite.")
+
+    tail_prob_ratio = n / n_u * (1 - alpha)  # (1 - alpha) / P(L > u)
+
+    if abs(xi) < 1e-8:
+        var = u - beta * np.log(tail_prob_ratio)
+        es = var + beta
+    else:
+        var = u + beta / xi * (tail_prob_ratio ** (-xi) - 1)
+        es = (var + beta - xi * u) / (1 - xi)
+
+    return float(var), float(es)

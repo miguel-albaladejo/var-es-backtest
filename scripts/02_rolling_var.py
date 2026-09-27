@@ -9,7 +9,12 @@ import pandas as pd
 
 from varbacktest.data import load_prices, log_returns, to_losses
 from varbacktest.forecast import rolling_var_es
-from varbacktest.models import historical_var_es, normal_var_es, student_t_var_es
+from varbacktest.models import (
+    historical_var_es,
+    normal_var_es,
+    student_t_var_es,
+    evt_var_es,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS_DIR = ROOT / "results"
@@ -21,6 +26,7 @@ MODELS = {
     "hist": ("Historical", historical_var_es),
     "norm": ("Normal", normal_var_es),
     "t": ("Student-t", student_t_var_es),
+    "evt": ("EVT (POT-GPD)", evt_var_es),
 }
 PERIODS = {"2008": ("2007", "2009"), "2020": ("2020", "2020")}
 
