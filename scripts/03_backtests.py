@@ -10,7 +10,12 @@ Reads the forecasts produced by scripts/02_rolling_var.py and applies:
 from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
-from varbacktest.backtests import basel_traffic_light, christoffersen_test, kupiec_test
+from varbacktest.backtests import (
+    basel_traffic_light,
+    christoffersen_test,
+    kupiec_test,
+    acerbi_szekely_test,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS_DIR = ROOT / "results"
@@ -53,6 +58,9 @@ def backtest_table(forecasts: pd.DataFrame, alpha: float = ALPHA) -> pd.DataFram
         chr_ = christoffersen_test(exceptions, alpha)
         basel = basel_traffic_light(exceptions)
         zone_share = basel["zone"].value_counts(normalize=True)
+        acs = acerbi_szekely_test(
+            forecasts["loss"], forecasts[f"var_{key}"], forecasts[f"es_{key}"], alpha
+        )
 
         rows[name] = {
             "exceptions": kup["x"],
@@ -67,6 +75,9 @@ def backtest_table(forecasts: pd.DataFrame, alpha: float = ALPHA) -> pd.DataFram
             "yellow_%": round(100 * zone_share.get("yellow", 0.0), 1),
             "red_%": round(100 * zone_share.get("red", 0.0), 1),
             "max_250d": int(basel["count"].max()),
+            "loss/ES": round(acs["mean_loss_to_es"], 2),
+            "z2": round(acs["z2"], 3),
+            "p_z2": acs["p_z2"],
         }
     return pd.DataFrame.from_dict(rows, orient="index")
 
