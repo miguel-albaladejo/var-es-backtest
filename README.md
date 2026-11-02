@@ -242,15 +242,13 @@ Market-risk capital is roughly the multiplier times the average VaR, so moving i
 
 #### Acerbi & Szekely (2014): Expected Shortfall backtest
 
-ES is not elicitable (Gneiting, 2011), so it cannot be backtested like VaR. Acerbi and
-Szekely showed it can still be tested using the identity that holds for a correct model:
+ES is harder to backtest than VaR because it is not elicitable (Gneiting, 2011), and for a while it was thought that it could not be backtested at all. Acerbi and Szekely showed that it can, using an identity that holds for a correct model:
 
 $$
 \mathbb{E}\left[L_t\, I_t\right] = p \cdot \mathrm{ES}_t
 $$
 
-Two statistics, both equal to 0 in expectation under $H_0$ and negative when tail risk is
-underestimated:
+They use two statistics, both with zero expectation under $H_0$ and negative when the tail risk is underestimated:
 
 $$
 Z_1 = 1 - \frac{1}{N}\sum_{t:\,I_t=1} \frac{L_t}{\mathrm{ES}_t}
@@ -258,11 +256,7 @@ Z_1 = 1 - \frac{1}{N}\sum_{t:\,I_t=1} \frac{L_t}{\mathrm{ES}_t}
 Z_2 = 1 - \frac{1}{T}\sum_{t=1}^{T} \frac{L_t\, I_t}{p\,\mathrm{ES}_t}
 $$
 
-$Z_1$ checks the *size* of losses on exception days ($N$ = number of exceptions); $Z_2$ jointly
-checks their *frequency and size*. The one-sided p-value of $Z_2$ uses a CLT approximation,
-$Z_2 \sqrt{T} / \hat s \approx N(0,1)$, with $\hat s$ the standard deviation of
-$L_t I_t / (p\,\mathrm{ES}_t)$. In simulations this test is well sized (3.8% rejections at 5%
-under a correct model) but has limited power with ~60 exceptions.
+$Z_1$ looks at the size of the losses on exception days ($N$ is the number of exceptions), and $Z_2$ looks at their frequency and size together. For the p-value of $Z_2$ I use a CLT approximation, $Z_2 \sqrt{T} / \hat s \approx N(0,1)$, with $\hat s$ the standard deviation of $L_t I_t / (p\,\mathrm{ES}_t)$.
 
 ### Results
 
@@ -293,17 +287,18 @@ Time in red: share of days with 10+ exceptions in the last 250 days (Basel).*
 
 *Loss / ES = average realized loss on VaR-breach days divided by the predicted ES (1 if correct).*
 
-**Key takeaways**
+With an equally weighted 500-day window, the probability of a breach right after another breach goes from around 1.5% to around 10%, whatever the distribution. That is why the unconditional models fail the independence test.
 
-- **Unconditional models fail independence.** With an equally weighted 500-day window, the probability of a breach right after another breach jumps from ~1.3% to ~9.5%, whatever the distribution.
-- **GARCH fixes the clustering.** Conditional volatility cuts that probability to 3–6% and the independence test stops rejecting. But the symmetric GARCH-t still breaches too often (1.5–1.6%): its loss tail is too thin.
-- **EVT fixes the count, GARCH fixes the timing: you need both.** GARCH-filtered EVT (McNeil & Frey, 2000) is the only model that passes the Kupiec test on both indices, passes all three tests on the IBEX, and **never enters the Basel red zone** — compared with 29% of days for the Gaussian VaR on the S&P 500.
-- **Expected Shortfall: size is mostly right, frequency is not.** On breach days, realized losses are within 2–14% of the predicted ES for most models, so Z2 rejections are driven mainly by too many exceptions. The Gaussian ES fails on both counts, underestimating tail losses by ~30%. GARCH-EVT is the only model whose ES is not rejected on either index.
+GARCH helps a lot here: that probability falls to 3–6%, and GARCH-t passes the independence test on both indices. But GARCH-t still has too many breaches (1.5–1.6%), probably because its loss tail is too thin.
+
+So you need both. GARCH-EVT is the only model that passes the Kupiec test on both indices and the only one that never enters the Basel red zone, against 29% of days for the Gaussian VaR on the S&P 500. On the IBEX it passes all the tests. On the S&P 500 it fails independence, although this rests on only four pairs of consecutive breaches.
+
+As for the ES, the size of the losses is mostly right and the problem is the frequency. On breach days, realized losses are within 14% of the predicted ES for every model except the Normal, whose realized losses are about 30% above its prediction. So most $Z_2$ rejections come from having too many exceptions. GARCH-EVT is the only model whose ES is not rejected on either index at 5%, though the p-values are not large (0.115 and 0.092).
 
 ![Basel traffic light, S&P 500](figures/basel_GSPC.png)
 ![Realized loss vs predicted ES on breach days, S&P 500](figures/es_breaches_GSPC.png)
 
-*Each point is a VaR-breach day. If the ES forecast is correct, points scatter around the red line. Unconditional models predict an almost constant ES, so crisis losses shoot vertically above it; GARCH-EVT's ES rises with volatility and its breach losses stay close to the diagonal.*
+*Each point is a day with a VaR breach. If the ES forecast is correct, the points should scatter around the red line. The unconditional models react slowly, so in a crisis the losses end up far above their ES. For GARCH-EVT the ES rises with volatility and the points stay close to the line.*
 
 ## Crisis analysis and final results
 

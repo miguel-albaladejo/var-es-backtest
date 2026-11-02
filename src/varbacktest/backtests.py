@@ -102,39 +102,7 @@ def basel_traffic_light(exceptions: pd.Series, window: int = 250) -> pd.DataFram
 def acerbi_szekely_test(
     losses: np.ndarray, var: np.ndarray, es: np.ndarray, alpha: float = 0.99
 ) -> dict:
-    """
-    Acerbi and Szekely (2014) backtests for Expected Shortfall.
-
-    With p = 1 - alpha and I_t = 1{L_t > VaR_t}, a correct model satisfies
-    E[L_t I_t] = p * ES_t. Two statistics (both ~0 under H0, negative when
-    the tail risk is underestimated):
-
-        Z1 = 1 - (1/N) * sum_{t: I_t = 1} L_t / ES_t
-             (size of the losses on exception days; N = number of exceptions)
-
-        Z2 = 1 - (1/T) * sum_t L_t I_t / (p * ES_t)
-             (joint test of the frequency and the size of exceptions)
-
-    The one-sided p-value of Z2 uses a CLT approximation:
-        Z2 / (s / sqrt(T)) ~ N(0, 1),  s = std of L_t I_t / (p ES_t)
-    so small p-values mean that ES is significantly underestimated.
-
-    Parameters
-    ----------
-    losses, var, es : np.ndarray
-        Realized losses and the VaR and ES forecasts for the same days.
-    alpha : float
-        Confidence level of VaR and ES (e.g. 0.99).
-
-    Returns
-    -------
-    dict
-        n : number of days
-        exceptions : number of VaR exceptions
-        mean_loss_to_es : average L_t / ES_t on exception days (1 if correct)
-        z1, z2 : Acerbi-Szekely statistics
-        p_z2 : one-sided p-value of Z2 (CLT approximation)
-    """
+    """Acerbi and Szekely (2014) ES backtest, with a CLT p-value for Z2."""
     losses = np.asarray(losses, dtype=float)
     var = np.asarray(var, dtype=float)
     es = np.asarray(es, dtype=float)
