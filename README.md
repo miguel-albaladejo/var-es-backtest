@@ -67,16 +67,13 @@ $$
 \mathrm{ES}_\alpha = m + s \ \frac{f_\nu(q)}{1-\alpha}\cdot\frac{\nu + q^2}{\nu - 1}
 $$
 
-**Extreme Value Theory.** Instead of fitting the whole distribution,
-EVT models only the loss tail. By the Pickands–Balkema–de Haan theorem, the excesses over a
-high threshold $u$ converge to a Generalized Pareto Distribution:
+**Extreme Value Theory.** Instead of fitting the whole distribution, EVT only models the loss tail. By the Pickands–Balkema–de Haan theorem, for most continuous distributions the excesses over a high threshold $u$ are close to a Generalized Pareto Distribution:
 
 $$
-P(L - u \le y \mid L > u) \approx\; 1 - \left(1 + \frac{\xi y}{\beta}\right)^{-1/\xi}
+P(L - u \le y \mid L > u) \approx 1 - \left(1 + \frac{\xi y}{\beta}\right)^{-1/\xi}
 $$
 
-where $\xi$ is the tail index (for instance a Student-t with $\nu$ degrees of
-freedom has $\xi = 1/\nu$). With $u$ the 90% empirical quantile, $n$ observations and $N_u$ excesses (Smith, 1987):
+where $\xi$ is the tail index (for instance a Student-t with $\nu$ degrees of freedom has $\xi = 1/\nu$). With $u$ the 90% empirical quantile, $n$ observations, $N_u$ excesses and $\xi < 1$ (Smith, 1987):
 
 $$
 \mathrm{VaR}_\alpha = u + \frac{\beta}{\xi}\left[\left(\frac{n}{N_u}(1-\alpha)\right)^{-\xi} - 1\right]
