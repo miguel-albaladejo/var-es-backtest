@@ -1,11 +1,4 @@
-"""
- Formal backtests of the rolling 99% VaR forecasts.
-
-Reads the forecasts produced by scripts/02_rolling_var.py and applies:
-  * Kupiec unconditional coverage test
-  * Christoffersen independence and conditional coverage tests
-  * Basel traffic-light zones (250-day window)
-"""
+"""Backtests of the rolling forecasts from scripts/02_rolling_var.py."""
 
 from pathlib import Path
 import matplotlib.pyplot as plt
@@ -34,22 +27,7 @@ TICKERS = ["^GSPC", "^IBEX"]
 
 
 def backtest_table(forecasts: pd.DataFrame, alpha: float = ALPHA) -> pd.DataFrame:
-    """
-    Run all backtests for every model in a forecasts table.
-
-    Parameters
-    ----------
-    forecasts : pd.DataFrame
-        Output of step 2: a "loss" column and one "var_<model>" column per model.
-    alpha : float
-        Confidence level of the VaR.
-
-    Returns
-    -------
-    pd.DataFrame
-        One row per model with exception counts, test statistics, p-values
-        and the share of days spent in each Basel zone.
-    """
+    """One row per model with the exceptions, p-values and Basel zones."""
     rows = {}
     for key, name in MODELS.items():
         exceptions = (forecasts["loss"] > forecasts[f"var_{key}"]).astype(int)
@@ -83,9 +61,7 @@ def backtest_table(forecasts: pd.DataFrame, alpha: float = ALPHA) -> pd.DataFram
 
 
 def plot_basel_counts(forecasts: pd.DataFrame, ticker: str) -> None:
-    """
-    Plot the rolling 250-day exception count of each model with Basel zones.
-    """
+    """Exceptions in the last 250 days of each model, over the Basel zones."""
     fig, ax = plt.subplots(figsize=(11, 4.5))
     ax.axhspan(0, 4.5, color="green", alpha=0.08)
     ax.axhspan(4.5, 9.5, color="gold", alpha=0.15)
@@ -110,12 +86,7 @@ def plot_basel_counts(forecasts: pd.DataFrame, ticker: str) -> None:
 
 
 def plot_es_on_breaches(forecasts: pd.DataFrame, ticker: str) -> None:
-    """Scatter of realized loss vs predicted ES on VaR-breach days, one panel per model.
-
-    If the ES forecast is correct, points scatter around the 45-degree line
-    (realized loss = predicted ES). Points above the line are breach days on
-    which the loss exceeded the predicted ES (tail risk underestimated).
-    """
+    """Realized loss vs predicted ES on breach days, one panel per model."""
     fig, axes = plt.subplots(2, 3, figsize=(12, 8), sharex=True, sharey=True)
     breach_losses = []
     for ax, (key, name) in zip(axes.flat, MODELS.items()):

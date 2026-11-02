@@ -175,12 +175,10 @@ On the S&P 500, EVT and historical simulation have the same exception rate. At 9
 
 ### Methodology
 
-Let $I_t = \mathbf{1}_{\{L_t > \mathrm{VaR}_t\}}$ be the **exception (hit) sequence**.
-If the VaR model at confidence level $\alpha$ is correct, $I_t$ must satisfy two properties
-(Christoffersen, 1998):
+Let $I_t = \mathbf{1}_{\{L_t > \mathrm{VaR}_t\}}$ be the sequence of exceptions. If a VaR model at confidence level $\alpha$ is correct, $I_t$ must satisfy two properties (Christoffersen, 1998):
 
-1. **Unconditional coverage:** $P(I_t = 1) = p$, with $p = 1 - \alpha$.
-2. **Independence:** $I_t$ is independent of $I_{t-1}, I_{t-2}, \dots$, so exceptions do not cluster in time.
+1. Unconditional coverage: $P(I_t = 1) = p$, with $p = 1 - \alpha$.
+2. Independence: $I_t$ is independent of $I_{t-1}, I_{t-2}, \dots$, so exceptions do not cluster in time.
 
 Together, they mean that $I_t \overset{iid}{\sim} \mathrm{Bernoulli}(p)$.
 
@@ -198,14 +196,11 @@ $$
 LR_{uc} = -2 \ln \frac{(1-p)^{n-x} p^{x}}{(1-\hat\pi)^{n-x} \hat\pi^{x}} \overset{H_0}{\sim} \chi^2_1
 $$
 
-The test is **two-sided**: it rejects models with too many exceptions (risk underestimated)
-and with too few (overly conservative, which ties up unnecessary capital).
-Its limitation is that it only counts exceptions and ignores *when* they occur.
+The test is two-sided: it rejects models with too many exceptions, but also models with too few, which are too conservative and tie up capital for nothing. The problem is that it only counts exceptions and does not look at when they happen.
 
 #### Christoffersen (1998): independence and conditional coverage
 
-The hit sequence is modelled as a first-order Markov chain. Let $n_{ij}$ be the number of days
-with $I_{t-1} = i$ and $I_t = j$, and define
+Here $I_t$ is modelled as a first-order Markov chain. Let $n_{ij}$ be the number of days with $I_{t-1} = i$ and $I_t = j$, and define
 
 $$
 \pi_{01} = \frac{n_{01}}{n_{00} + n_{01}}, \qquad
@@ -223,7 +218,7 @@ LR_{ind} = -2 \ln \frac{(1-\pi)^{n_{00}+n_{10}} \pi^{n_{01}+n_{11}}}
 \overset{H_0}{\sim} \chi^2_1
 $$
 
-The **conditional coverage** test checks both properties at once:
+The conditional coverage test checks both properties at once:
 
 $$
 LR_{cc} = LR_{uc} + LR_{ind} \overset{H_0}{\sim} \chi^2_2
@@ -243,8 +238,7 @@ Banking supervisors count the 99% VaR exceptions over the last 250 trading days
 | Yellow | 5–9 | 3.40 – 3.85 |
 | Red | 10 or more | 4 (model under review) |
 
-Market-risk capital is roughly *multiplier × average VaR*, so every move into the yellow or
-red zone has a direct capital cost for the bank.
+Market-risk capital is roughly the multiplier times the average VaR, so moving into the yellow or red zone costs the bank capital.
 
 #### Acerbi & Szekely (2014): Expected Shortfall backtest
 
