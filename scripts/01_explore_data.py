@@ -1,5 +1,5 @@
 """
-We here document three aspects of financial returns:
+We here look at three aspects of financial returns:
     1. Heavy tails
     2. Volatility clusters
     3. Lack of normality
@@ -14,19 +14,6 @@ from pathlib import Path
 
 
 def summary_statistics(r: pd.Series) -> pd.Series:
-    """
-    Parameters
-    ----------
-    r : pd.Series
-        financial returns
-
-    Returns
-    -------
-    pd.Series
-        number observations, annualized mean, annualized std, skewness,
-        kurtosis, minimum, minimum date, maximum, maximum date,
-        Jarque-Bera p-value
-    """
     return pd.Series(
         {
             "n_obs": len(r),

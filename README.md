@@ -129,16 +129,19 @@ closer to i.i.d. than raw losses.
 
 From this statistics, one can already see some of the common facts about financial returns:
 
-- **Fat tails.** The worst S&P 500 day was a **10.5** $\sigma$ move. Under normality, such a day would be expected roughly once every $10^{23}$ years, yet it happened in this 26-year sample. A Gaussian VaR therefore underestimates tail risk.
-- **Negative skewness.** Large losses are more frequent than large gains of the same size.
-- **Volatility clustering.** The best days of both indices occurred in the middle of crises (Lehman 2008, the euro crisis 2010), and extreme moves come in clusters, which motivates GARCH-type models.
-- **Volatility** The IBEX is more volatile, but the S&P 500 has heavier tails.
+- Returns have heavy tails. The worst day of the S&P 500 was a 10.5 $\sigma$ move, which under normality would happen about once every $10^{23}$ years, and it happened in a sample of 26 years. So a Gaussian VaR is going to underestimate the risk in the tail.
 
-Rolling one-month volatility ranges from below 10% in calm years (2017) to around 80% in October 2008 and close to 100% in March 2020.
+- They are also negatively skewed: large losses are more frequent than large gains of the same size.
+
+- Volatility comes in clusters. The best days of both indices were in the middle of crises (Lehman in 2008, the euro crisis in 2010), and extreme days tend to come together. This is the reason to use GARCH models later on.
+
+- More volatility does not mean fatter tails, though. The IBEX is more volatile, but the S&P 500 has the higher kurtosis.
+
+On the S&P 500, one-month volatility goes from below 10% in 2017 to around 85% in October 2008 and almost 100% during COVID.
 
 ![Rolling volatility](figures/rolling_volatility.png)
 
-On a log scale, the Normal density (red) vanishes beyond ±5%, while observed daily returns reach −10% to −15%.
+On a log scale, the Normal density is almost zero at ±5%, but the data go as far as −15%.
 
 ![Return distribution vs Normal](figures/histogram.png)
 
