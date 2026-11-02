@@ -38,22 +38,7 @@ PERIODS = {"2008": ("2007", "2009"), "2020": ("2020", "2020")}
 
 
 def count_exceptions(table: pd.DataFrame, alpha: float = ALPHA) -> pd.DataFrame:
-    """
-    Count VaR exceptions (loss > VaR) for each model in `table`.
-
-    Parameters
-    ----------
-    table : pd.DataFrame
-        Must contain a "loss" column and one "var_<model>" column per model.
-    alpha : float
-        Confidence level of the VaR.
-
-    Returns
-    -------
-    pd.DataFrame
-        One row per model with the observed and expected number of
-        exceptions, the ratio between them and the observed exception rate.
-    """
+    """Observed vs expected exceptions of each model."""
     n = len(table)
     expected = (1 - alpha) * n
     rows = {}
@@ -75,7 +60,7 @@ if __name__ == "__main__":
     for ticker in ["^GSPC", "^IBEX"]:
         loss = to_losses(log_returns(load_prices(ticker))).rename("loss")
 
-        # --- Rolling forecasts for every model (reusing cached results) ---
+        # The rolling fits are slow, so reuse the forecasts already saved
         out_file = RESULTS_DIR / f"forecasts_{ticker.replace('^', '')}.csv"
         cached = (
             pd.read_csv(out_file, index_col=0, parse_dates=True)
@@ -98,7 +83,6 @@ if __name__ == "__main__":
         table = pd.concat(forecasts, axis=1).dropna()
         table.to_csv(out_file)
 
-        # --- Exception counts ---
         print(
             f"\n{ticker} - 99% VaR exceptions "
             f"({table.index[0].date()} to {table.index[-1].date()}, {len(table)} days)"
@@ -106,7 +90,6 @@ if __name__ == "__main__":
         print(count_exceptions(table))
         print()
 
-        # --- Figures: losses vs VaR in crisis periods ---
         for label, (start, end) in PERIODS.items():
             df = table.loc[start:end]
             fig, ax = plt.subplots(figsize=(11, 4.5))
