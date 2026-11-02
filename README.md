@@ -306,29 +306,31 @@ As for the ES, the size of the losses is mostly right and the problem is the fre
 
 | S&P 500 | Historical | Normal | Student-t | EVT | GARCH-t | GARCH-EVT |
 |---|---|---|---|---|---|---|
-| GFC (Sep 2008 – Jun 2009) | 16 / 2.1 | 21 / 2.1 | 14 / 2.1 | 15 / 2.1 | 4 / 2.1 | **2 / 2.1** |
-| Euro crisis (H2 2011) | 5 / 1.3 | 9 / 1.3 | 4 / 1.3 | 4 / 1.3 | 3 / 1.3 | **2 / 1.3** |
-| COVID (Feb – Jun 2020) | 10 / 0.9 | 13 / 0.9 | 12 / 0.9 | 10 / 0.9 | 3 / 0.9 | **2 / 0.9** |
-| Rate hikes (2022) | 7 / 2.5 | 12 / 2.5 | 11 / 2.5 | 8 / 2.5 | 3 / 2.5 | **2 / 2.5** |
-| Calm year (2017) | 0 / 2.5 | 0 / 2.5 | 0 / 2.5 | 0 / 2.5 | 2 / 2.5 | **2 / 2.5** |
+| GFC (Sep 2008 – Jun 2009) | 16 / 2.1 | 21 / 2.1 | 14 / 2.1 | 15 / 2.1 | 4 / 2.1 | 2 / 2.1 |
+| Euro crisis (H2 2011) | 5 / 1.3 | 9 / 1.3 | 4 / 1.3 | 4 / 1.3 | 3 / 1.3 | 2 / 1.3 |
+| COVID (Feb – Jun 2020) | 10 / 0.9 | 13 / 0.9 | 12 / 0.9 | 10 / 0.9 | 3 / 0.9 | 2 / 0.9 |
+| Rate hikes (2022) | 7 / 2.5 | 12 / 2.5 | 11 / 2.5 | 8 / 2.5 | 3 / 2.5 | 2 / 2.5 |
+| Calm year (2017) | 0 / 2.5 | 0 / 2.5 | 0 / 2.5 | 0 / 2.5 | 2 / 2.5 | 2 / 2.5 |
 
 | IBEX 35 | Historical | Normal | Student-t | EVT | GARCH-t | GARCH-EVT |
 |---|---|---|---|---|---|---|
-| GFC (Sep 2008 – Jun 2009) | 10 / 2.1 | 14 / 2.1 | 9 / 2.1 | 8 / 2.1 | 1 / 2.1 | **0 / 2.1** |
-| Euro crisis (H2 2011) | 3 / 1.3 | 7 / 1.3 | 5 / 1.3 | 4 / 1.3 | 1 / 1.3 | **1 / 1.3** |
-| COVID (Feb – Jun 2020) | 13 / 0.9 | 16 / 0.9 | 16 / 0.9 | 11 / 0.9 | 5 / 0.9 | **3 / 0.9** |
+| GFC (Sep 2008 – Jun 2009) | 10 / 2.1 | 14 / 2.1 | 9 / 2.1 | 8 / 2.1 | 1 / 2.1 | 0 / 2.1 |
+| Euro crisis (H2 2011) | 3 / 1.3 | 7 / 1.3 | 5 / 1.3 | 4 / 1.3 | 1 / 1.3 | 1 / 1.3 |
+| COVID (Feb – Jun 2020) | 13 / 0.9 | 16 / 0.9 | 16 / 0.9 | 11 / 0.9 | 5 / 0.9 | 3 / 0.9 |
 | Rate hikes (2022) | 3 / 2.6 | 4 / 2.6 | 2 / 2.6 | 2 / 2.6 | 5 / 2.6 | 5 / 2.6 |
-| Calm year (2017) | 0 / 2.5 | 0 / 2.5 | 0 / 2.5 | 0 / 2.5 | 1 / 2.5 | **1 / 2.5** |
+| Calm year (2017) | 0 / 2.5 | 0 / 2.5 | 0 / 2.5 | 0 / 2.5 | 1 / 2.5 | 1 / 2.5 |
 
 ![VaR in the 2008 and 2020 crises, S&P 500](figures/crisis_GSPC.png)
 
-- **In crises, unconditional models breach 7–18× more often than expected**, while GARCH-EVT stays close to target (2 vs. 2.1 in 2008 on the S&P 500; 0 on the IBEX).
-- **In calm periods they are overly conservative**: zero breaches in 2017, as the 500-day window still contains the 2015–2016 volatility.
-- **GARCH is not perfect.** In the fastest shock on record (COVID) it still needed a few days to react, and in 2022 on the IBEX it was caught with a low VaR after a very calm 2021 — its fast reaction works in both directions.
+During the 2008 crisis and COVID, the unconditional models have between 4 and 18 times more breaches than expected. GARCH-EVT has 2 on the S&P 500 and 0 on the IBEX in 2008 (2.1 expected), and 2 and 3 in COVID (0.9 expected).
+
+In calm periods the unconditional models are too conservative: they have no breaches at all in 2017, because the 500-day window still contains the volatility of 2015 and 2016.
+
+GARCH is not perfect either. The first days of COVID still caught it out, and on the IBEX it has 5 breaches in 2022 against 2.6 expected, three of them between 24 February and 3 March, when the war in Ukraine started. It also overreacts after a big shock: on the S&P 500 its VaR reached 28% in March 2020, more than twice the worst daily loss in the whole sample.
 
 ### Basel capital charge
 
-Market-risk capital under the Basel internal-models approach (without the stressed-VaR add-on):
+Market-risk capital under the Basel internal-models approach, using the one-day VaR instead of the regulatory 10-day one and without the stressed-VaR add-on:
 
 $$
 \text{capital}_t = \max\left(\mathrm{VaR}_t,\; m_t \cdot \overline{\mathrm{VaR}}_{t,\,60\text{d}}\right)
@@ -347,8 +349,11 @@ where $m_t \in [3, 4]$ is the traffic-light multiplier.
 
 *Tests: Kupiec, Christoffersen independence and Acerbi–Szekely Z2, at 5%.*
 
-- **Conditional models are both safer and cheaper.** GARCH-EVT requires **16% less capital than historical simulation on the S&P 500** (6% on the IBEX) while passing more tests: it raises VaR in crises and lowers it in calm periods, putting capital where the risk is.
-- **A cheap VaR that fails ends up expensive.** The Normal model has the lowest average VaR among unconditional models, but its time in the red zone (multiplier 4) makes its capital charge higher than GARCH-EVT's on the S&P 500.
+GARCH-EVT needs 16% less capital on average than historical simulation on the S&P 500 (6% on the IBEX) and passes more tests, because it raises VaR in crises and lowers it in calm periods.
+
+The price is that its capital jumps when things go badly. It peaks at 43% on the S&P 500 and 37% on the IBEX, against 25% and 21% for historical simulation.
+
+The Normal model has the lowest average VaR among the unconditional models, but it spends so much time in the red zone (multiplier 4) that on the S&P 500 it ends up needing more capital than GARCH-EVT.
 
 ## Project structure
 

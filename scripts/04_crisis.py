@@ -1,12 +1,4 @@
-"""
-Crisis analysis and final scorecard.
-
-Reads the forecasts and backtest tables and produces:
-  * exceptions and average VaR of every model in each crisis period
-  * the Basel market-risk capital charge implied by each model
-  * a final scorecard combining all backtests
-  * crisis figures with three representative models
-"""
+"""Crisis tables, Basel capital charge and final scorecard."""
 
 from pathlib import Path
 import matplotlib.pyplot as plt
@@ -40,12 +32,7 @@ PLOT_MODELS = {"norm": "Normal", "hist": "Historical", "garch_evt": "GARCH-EVT"}
 
 
 def crisis_table(forecasts: pd.DataFrame) -> pd.DataFrame:
-    """
-    Exceptions (vs. expected) of each model in each period.
-
-    Returns a table with one row per period and one column per model; each
-    cell is "exceptions / expected".
-    """
+    """Exceptions vs expected of each model in each period."""
     rows = {}
     for period, (start, end) in PERIODS.items():
         df = forecasts.loc[start:end]
@@ -59,16 +46,7 @@ def crisis_table(forecasts: pd.DataFrame) -> pd.DataFrame:
 
 
 def basel_capital_charge(var: pd.Series, exceptions: pd.Series) -> pd.Series:
-    """
-    Daily Basel market-risk capital charge implied by a VaR model.
-
-    Basel (1996) internal-models formula, without the stressed-VaR add-on:
-
-        capital_t = max( VaR_t , m_t * mean(VaR over the last 60 days) )
-
-    where m_t = 3 + plus factor is the traffic-light multiplier
-    (3 in the green zone, up to 4 in the red zone).
-    """
+    """Daily Basel capital charge of a VaR model, without the stressed-VaR add-on."""
     multiplier = basel_traffic_light(exceptions)["multiplier"]
     var_60 = var.rolling(60).mean()
     capital = pd.concat([var, multiplier * var_60], axis=1).max(axis=1, skipna=False)
