@@ -5,30 +5,25 @@ One-day Value-at-Risk (VaR) and Expected Shortfall (ES) models for the
 statistical backtests, with a focus on crisis periods (2008, 2020, 2022).
 
 This project is the empirical counterpart of my BSc Mathematics thesis,
-*Risk Measures*, a functional-analytic study of convex and coherent risk
-measures. The thesis explains **why** VaR is not a coherent risk measure
-and Expected Shortfall is; this project tests **how** they behave on real data.
+*Risk Measures*, where I study risk measures as functionals to understand its properties and proof the ideas behind convex and coherent risk measures.During the thesis, I develop counterexamples to show why VaR is not a coherent risk measure
+and Expected Shortfall is. The aim of this project is to test how they behave on real data.
 
-## Key findings
+## Summary and findings
 
 - **The Gaussian VaR fails badly.** On the S&P 500 it is breached on 2.5% of days instead of 1%, and it would have been in the Basel red zone 29% of the time.
 - **Fat tails fix the *number* of breaches; conditional volatility fixes their *timing*.** Without GARCH, the probability of a breach right after another breach is ~9.5% instead of 1%.
 - **Only GARCH-filtered EVT passes the backtests**: it passes the Kupiec test on both indices, all three tests on the IBEX 35, and never enters the Basel red zone over 2002–2026 (including 2008 and 2020).
 
-> Work in progress — see [Roadmap](#roadmap).
-
 ## Data
 
 - Daily adjusted closing prices from Yahoo Finance: `^GSPC` (S&P 500) and `^IBEX` (IBEX 35), Jan 2000 – Sep 2026.
-- Both are **price indices** (dividends excluded).
-- Each index is treated separately, since they follow different exchange holiday calendars.
+- Both are price indices (dividends excluded).
 
-## Conventions
+## Notation
 
 - Log-returns: $r_t = \ln(P_t / P_{t-1})$.
-- Losses: $L_t = -r_t$, so VaR and ES are reported as **positive numbers**.
-- A VaR **exception** on day $t$ occurs when $L_t > \mathrm{VaR}_t$.
-- Forecasts for day $t$ only use information available up to day $t-1$ (no look-ahead bias).
+- Losses: $L_t = -r_t$.
+- A VaR exception on day $t$ occurs when $L_t > \mathrm{VaR}_t$.
 
 ## Risk measures and models
 
@@ -37,28 +32,26 @@ and Expected Shortfall is; this project tests **how** they behave on real data.
 Let $L$ be the one-day loss and $\alpha$ the confidence level (99% here):
 
 $$
-\mathrm{VaR}_\alpha(L) = \inf\{\,x : P(L \le x) \ge \alpha\,\} \qquad
-\mathrm{ES}_\alpha(L) = \mathbb{E}\left[\,L \mid L \ge \mathrm{VaR}_\alpha(L)\,\right]
+\mathrm{VaR}_\alpha(L) = \inf\{x : P(L \le x) \ge \alpha\} \qquad
+\mathrm{ES}_\alpha(L) = \mathbb{E}\left[L \mid L \ge \mathrm{VaR}_\alpha(L)\right]
 $$
 
-VaR is the loss exceeded only on $(1-\alpha)$ of days; ES is the average loss on those days.
-VaR is **not a coherent risk measure** (Artzner et al., 1999): it can fail sub-additivity, so
-diversification may appear to increase risk, and it says nothing about losses beyond the
-quantile. ES is coherent, and since Basel III (FRTB) it is the regulatory standard at 97.5%.
+It is a well-known result taht VaR is not a coherent risk measure (Artzner et al., 1999): it fails on sub-additivity, so
+diversification may appear to increase risk. However, ES is coherent, and since Basel III (FRTB) it is the regulatory standard at 97.5%.
 In the notation of my thesis, $\mathrm{ES}_{\alpha}(L) = \mathrm{AVaR}_{1-\alpha}(X)$ for the position $X = -L$.
 
-All models produce **one-day-ahead forecasts from a rolling 500-day window**: the forecast for
+All models produce one-day-ahead forecasts from a rolling 500-day window: the forecast for
 day $t$ uses only the losses of days $t-500, \dots, t-1$.
 
 ### Unconditional models
 
 These models treat the 500 losses in the window as i.i.d. draws from a fixed distribution.
 
-**Historical simulation.** No distributional assumption: VaR is the empirical 99% quantile of
+**Historical simulation.** VaR is the empirical 99% quantile of
 the window, and ES the mean of the losses at or above it.
 
 **Normal.** $L \sim N(\mu, \sigma^2)$, with $\mu, \sigma$ estimated on the window.
-With $z_\alpha = \Phi^{-1}(\alpha)$:
+With $z_\alpha = \Phi^{-1}(\alpha)$, the risk measures read:
 
 $$
 \mathrm{VaR}_\alpha = \mu + \sigma z_\alpha \qquad
@@ -69,21 +62,20 @@ $$
 With $q = t_\nu^{-1}(\alpha)$ and $f_\nu$ the $t_\nu$ density:
 
 $$
-\mathrm{VaR}_\alpha = m + s\,q \qquad
-\mathrm{ES}_\alpha = m + s\,\frac{f_\nu(q)}{1-\alpha}\cdot\frac{\nu + q^2}{\nu - 1}
+\mathrm{VaR}_\alpha = m + s \ q \qquad
+\mathrm{ES}_\alpha = m + s \ \frac{f_\nu(q)}{1-\alpha}\cdot\frac{\nu + q^2}{\nu - 1}
 $$
 
-**Extreme Value Theory (peaks over threshold).** Instead of fitting the whole distribution,
+**Extreme Value Theory.** Instead of fitting the whole distribution,
 EVT models only the loss tail. By the Pickands–Balkema–de Haan theorem, the excesses over a
 high threshold $u$ converge to a Generalized Pareto Distribution:
 
 $$
-P(L - u \le y \mid L > u) \;\approx\; 1 - \left(1 + \frac{\xi y}{\beta}\right)^{-1/\xi}
+P(L - u \le y \mid L > u) \approx\; 1 - \left(1 + \frac{\xi y}{\beta}\right)^{-1/\xi}
 $$
 
-where $\xi$ is the tail index ($\xi > 0$: power-law tail; a Student-t with $\nu$ degrees of
-freedom has $\xi = 1/\nu$). With $u$ the 90% empirical quantile, $n$ observations and $N_u$
-excesses (Smith, 1987):
+where $\xi$ is the tail index (for instance a Student-t with $\nu$ degrees of
+freedom has $\xi = 1/\nu$). With $u$ the 90% empirical quantile, $n$ observations and $N_u$ excesses (Smith, 1987):
 
 $$
 \mathrm{VaR}_\alpha = u + \frac{\beta}{\xi}\left[\left(\frac{n}{N_u}(1-\alpha)\right)^{-\xi} - 1\right]
@@ -91,24 +83,20 @@ $$
 \mathrm{ES}_\alpha = \frac{\mathrm{VaR}_\alpha + \beta - \xi u}{1 - \xi}
 $$
 
-The threshold is a bias–variance trade-off: too low and the GPD approximation fails, too
-high and too few excesses remain to estimate $\xi$ and $\beta$.
-
 ### Conditional models
 
 Unconditional models give the same weight to a loss from 18 months ago as to yesterday's, so
 they react slowly when volatility changes. Conditional models let volatility depend on the
 recent past.
 
-**GARCH(1,1)** (Bollerslev, 1986):
+**GARCH(1,1)** :
 
 $$
 L_t = \mu + \sigma_t z_t, \qquad z_t \overset{iid}{\sim} (0,1), \qquad
-\sigma_t^2 = \omega + a\,\varepsilon_{t-1}^2 + b\,\sigma_{t-1}^2
+\sigma_t^2 = \omega + a\varepsilon_{t-1}^2 + b\sigma_{t-1}^2
 $$
 
-with $\varepsilon_t = L_t - \mu$. A large shock yesterday raises today's volatility (the
-$a$ term) and high volatility persists (the $b$ term), which reproduces volatility clustering.
+with $\varepsilon_t = L_t - \mu$. This is a well-known model that reproduces volatility clustering.
 Given the one-day-ahead volatility forecast $\sigma_{t+1|t}$:
 
 $$
@@ -116,15 +104,14 @@ $$
 \mathrm{ES}_\alpha = \mu + \sigma_{t+1|t}\; \mathrm{ES}_\alpha(z)
 $$
 
-**GARCH-t.** $z_t$ follows a Student-t rescaled to unit variance, so $q_\alpha(z)$ and
+**GARCH-t.** Here, $z_t$ follows a Student-t rescaled to unit variance, so $q_\alpha(z)$ and
 $\mathrm{ES}_\alpha(z)$ are the Student-t formulas above multiplied by $\sqrt{(\nu-2)/\nu}$.
 
-**GARCH-filtered EVT** (McNeil & Frey, 2000). The GARCH model is fitted first, and EVT is then
+**GARCH-filtered EVT** (McNeil & Frey, 2000). In this case, the GARCH model is fitted first, and EVT is then
 applied to the standardized residuals $\hat z_t = (L_t - \hat\mu)/\hat\sigma_t$, which are much
-closer to i.i.d. than raw losses. GARCH captures the **dynamics** of risk and EVT the **shape
-of the tail**.
+closer to i.i.d. than raw losses.
 
-## Stylized facts
+## Some facts
 
 |                        |        S&P 500      |       IBEX 35       |
 |------------------------|---------------------|---------------------|
@@ -139,25 +126,24 @@ of the tail**.
 
 *Returns are log-returns.*
 
-**Key takeaways**
+From this statistics, one can already see some of the common facts about financial returns:
 
 - **Fat tails.** The worst S&P 500 day was a **10.5** $\sigma$ move. Under normality, such a day would be expected roughly once every $10^{23}$ years, yet it happened in this 26-year sample. A Gaussian VaR therefore underestimates tail risk.
 - **Negative skewness.** Large losses are more frequent than large gains of the same size.
-- **Volatility clustering.** The best days of both indices occurred in the middle of crises (Lehman 2008, the euro crisis 2010). Extreme moves come in clusters, which motivates GARCH-type models.
-- **Volatility ≠ tail risk.** The IBEX is more volatile, but the S&P 500 has heavier tails.
+- **Volatility clustering.** The best days of both indices occurred in the middle of crises (Lehman 2008, the euro crisis 2010), and extreme moves come in clusters, which motivates GARCH-type models.
+- **Volatility** The IBEX is more volatile, but the S&P 500 has heavier tails.
 
-**Volatility clustering.** Rolling one-month volatility ranges from below 10% in calm years (2017) to around 80% in October 2008 and close to 100% in March 2020.
+Rolling one-month volatility ranges from below 10% in calm years (2017) to around 80% in October 2008 and close to 100% in March 2020.
 
 ![Rolling volatility](figures/rolling_volatility.png)
 
-**Fat tails.** On a log scale, the Normal density (red) vanishes beyond ±5%, while observed daily returns reach −10% to −15%.
+On a log scale, the Normal density (red) vanishes beyond ±5%, while observed daily returns reach −10% to −15%.
 
 ![Return distribution vs Normal](figures/histogram.png)
 
 ## Rolling VaR forecasts
 
-One-day 99% VaR and ES forecasts with a 500-day rolling window. The forecast
-for day *t* only uses losses up to *t − 1*. A correct 99% VaR should be
+One-day 99% VaR and ES forecasts with a 500-day rolling window. A correct 99% VaR should be
 breached on **1%** of days.
 
 | Exception rate | S&P 500 | IBEX 35 |
@@ -170,8 +156,6 @@ breached on **1%** of days.
 | **GARCH-EVT** | **1.11%** | **1.10%** |
 
 *S&P 500: 6,222 forecasts (2002–2026). IBEX 35: 6,300 forecasts (2002–2026).*
-
-**Key takeaways**
 
 - **The Gaussian VaR breaches 2.5× more often than it should** on the S&P 500, a direct consequence of fat tails.
 - **Fixing the tails is not enough.** The Student-t improves on the Normal but not on historical simulation, and no unconditional model gets close to 1% on both indices. The main problem is *dynamics*: a 500-day equally weighted window reacts too slowly to volatility changes.
@@ -393,14 +377,3 @@ python scripts/03_backtests.py      # Kupiec, Christoffersen and Basel backtests
 python scripts/04_crisis.py  # crisis tables, capital charge and final scorecard
 pytest                              # unit tests
 ```
-
-## Roadmap
-
-- [x] Data pipeline: download, cleaning, local cache
-- [x] Exploratory analysis and stylized facts
-- [x] VaR/ES models: historical simulation, Normal, Student-t, EVT (rolling window)
-- [x] VaR backtests: Kupiec, Christoffersen, Basel traffic light
-- [x] GARCH(1,1)-t and GARCH-filtered EVT
-- [x] ES backtest: Acerbi–Szekely
-- [ ] Crisis analysis (2008, 2020, 2022) and final results
-- [ ] Extension: asymmetric GJR-GARCH (leverage effect)
