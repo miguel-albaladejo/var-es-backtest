@@ -10,7 +10,7 @@ and Expected Shortfall is. The aim of this project is to test how they behave on
 
 ## Summary and findings
 
-- The Gaussian VaR does badly. On the S&P 500 it is breached on 2.5% of days instead of 1%, and it would have been in the Basel red zone 29% of the time.
+- The Gaussian VaR works badly. On the S&P 500 it is breached on 2.5% of days instead of 1%, and it would have been in the Basel red zone 29% of the time.
 
 - Heavier tails bring the number of breaches closer to 1%, but the breaches still come in clusters: without GARCH, the probability of a breach right after another one is around 10%. Adding GARCH brings it down to 3–6%.
 
@@ -18,8 +18,7 @@ and Expected Shortfall is. The aim of this project is to test how they behave on
 
 ## Data
 
-- Daily adjusted closing prices from Yahoo Finance: `^GSPC` (S&P 500) and `^IBEX` (IBEX 35), Jan 2000 – Sep 2026.
-- Both are price indices (dividends excluded).
+I use daily closing prices from Yahoo Finance for the S&P 500 (`^GSPC`) and the IBEX 35 (`^IBEX`), from January 2000 to September 2026. Both are price indices, so dividends are not included.
 
 ## Notation
 

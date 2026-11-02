@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from varbacktest.data import log_returns, to_losses
+from varbacktest.data import log_returns
 
 
 def make_series(values, dates, name="TEST"):
