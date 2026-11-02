@@ -1,7 +1,7 @@
 # Empirical Backtesting of VaR and Expected Shortfall
 
 One-day Value-at-Risk (VaR) and Expected Shortfall (ES) models for the
-**S&P 500** and the **IBEX 35** (2000–2026), evaluated with formal
+S&P 500 and the IBEX 35 (2000–2026), evaluated with formal
 statistical backtests, with a focus on crisis periods (2008, 2020, 2022).
 
 This project is the empirical counterpart of my BSc Mathematics thesis,
@@ -369,9 +369,16 @@ data/              local price cache (not tracked by git)
 ## How to run
 
 ```bash
-python scripts/01_explore_data.py   # stylized facts table and figures
-python scripts/02_rolling_var.py    # rolling VaR/ES forecasts (slow: MLE fits on ~6,200 windows)
-python scripts/03_backtests.py      # Kupiec, Christoffersen and Basel backtests
-python scripts/04_crisis.py  # crisis tables, capital charge and final scorecard
-pytest                              # unit tests
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+pip install -e .
+
+python scripts/01_explore_data.py   # statistics and figures of the returns
+python scripts/02_rolling_var.py    # rolling forecasts and exception counts
+python scripts/03_backtests.py      # VaR and ES backtests
+python scripts/04_crisis.py         # crisis tables, capital and final scorecard
+pytest                              # tests
 ```
+
+The prices are not in the repo: the first run downloads them from Yahoo up to today, so the table of statistics can change a little. The rolling forecasts used in this README are saved in `results/`, and the scripts reuse them because fitting everything again takes a long time.
