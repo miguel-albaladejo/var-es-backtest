@@ -144,8 +144,7 @@ On a log scale, the Normal density is almost zero at ±5%, but the data go as fa
 
 ## Rolling VaR forecasts
 
-One-day 99% VaR and ES forecasts with a 500-day rolling window. A correct 99% VaR should be
-breached on **1%** of days.
+These are the one-day 99% forecasts with a 500-day rolling window. A correct 99% VaR should be breached on 1% of days.
 
 | Exception rate | S&P 500 | IBEX 35 |
 |---|---|---|
@@ -158,15 +157,19 @@ breached on **1%** of days.
 
 *S&P 500: 6,222 forecasts (2002–2026). IBEX 35: 6,300 forecasts (2002–2026).*
 
-- **The Gaussian VaR breaches 2.5× more often than it should** on the S&P 500, a direct consequence of fat tails.
-- **Fixing the tails is not enough.** The Student-t improves on the Normal but not on historical simulation, and no unconditional model gets close to 1% on both indices. The main problem is *dynamics*: a 500-day equally weighted window reacts too slowly to volatility changes.
-- **A symmetric Student-t can underperform historical simulation** (IBEX): returns are negatively skewed, so the loss tail is heavier than the gain tail.
-- **EVT fixes the asymmetry problem.** By modeling only the loss tail, EVT is the best model on the IBEX (1.19%), well ahead of the symmetric Student-t (1.49%).
-- **At 99% with a 500-day window, EVT ≈ historical simulation** (identical on the S&P 500): the 99% quantile still lies inside the data. EVT's advantage appears when extrapolating further into the tail (99.9% VaR, Expected Shortfall).
+GARCH-EVT is the only model close to 1% on both indices.
+
+The Gaussian VaR is breached 2.5 times more often than it should on the S&P 500, which is what one would expect given the fat tails.
+
+Better tails are not enough, though. The Student-t beats the Normal but not historical simulation. Adding GARCH is not enough either: GARCH-t stays at around 1.5–1.6%. It is the combination of GARCH and EVT that gets close to 1%.
+
+The Student-t is also symmetric while returns are negatively skewed, which is probably why it does worse than historical simulation on the IBEX. EVT only looks at the loss tail and is the best unconditional model there (1.19%).
+
+On the S&P 500, EVT and historical simulation have the same exception rate. At 99% with 500 days the quantile is still inside the data, so EVT has little to extrapolate. It should help more further out in the tail, but I did not test that here.
 
 ![S&P 500 VaR during the 2008 crisis](figures/var_GSPC_2008.png)
 
-*Unconditional models (historical, Normal, Student-t, EVT) underestimated risk going into 2008, breached in clusters during the crisis, and then stayed overly conservative for two years while crisis days remained in the window. GARCH-based models react within days in both directions. Red dots: exceptions of historical simulation.*
+*The unconditional models (historical, Normal, Student-t and EVT) underestimated risk going into 2008, were breached in clusters during the crisis, and then stayed too conservative for two years while the crisis days were still in the window. The GARCH models react within days, both up and down. Red dots are the exceptions of historical simulation.*
 
 ## Formal backtests
 
