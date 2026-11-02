@@ -30,7 +30,7 @@ I use daily closing prices from Yahoo Finance for the S&P 500 (`^GSPC`) and the 
 
 ### VaR and Expected Shortfall
 
-Let $L$ be the one-day loss and $\alpha$ the confidence level (99% here):
+Let $L$ be the one-day loss, with a continuous distribution, and $\alpha$ the confidence level (99% here):
 
 $$
 \mathrm{VaR}_\alpha(L) = \inf\{x : P(L \le x) \ge \alpha\} \qquad

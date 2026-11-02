@@ -16,19 +16,6 @@ from arch import arch_model
 def historical_var_es(losses: np.ndarray, alpha: float = 0.99) -> tuple[float, float]:
     """
     No distribution for losses is assumed here.
-
-    Parameters
-    ----------
-    losses : np.ndarray
-        Vector of losses
-    alpha : float
-        Confidence level
-
-    Returns
-    -------
-    (var, es) : tuple[float, float]
-        VaR is the empirical quantile
-        ES is the mean of losses greater than or equal to VaR
     """
     losses = np.asarray(losses)
     var = np.quantile(losses, alpha)
@@ -43,17 +30,6 @@ def normal_var_es(losses: np.ndarray, alpha: float = 0.99) -> tuple[float, float
         VaR = mu + sigma*z_alpha
         ES = mu + sigma*phi(z_alpha)/(1-alpha)
     where Phi and phi are the CDF and the pdf, respectively.
-
-    Parameters
-    ----------
-    losses : np.ndarray
-        Array of losses
-    alpha : float
-        Confidence level
-
-    Returns
-    -------
-    (var, es) : tuple[float, float]
     """
     mu = losses.mean()
     sd_l = losses.std(ddof=1)
@@ -72,17 +48,6 @@ def student_t_var_es(losses: np.ndarray, alpha: float = 0.99) -> tuple[float, fl
         VaR = m + s*q
         ES = m + s*f(q)/(1-alpha)*(nu + q^2)/(nu - 1)
     where t_nu and f are the CDF and the pdf, respectively.
-
-    Parameters
-    ----------
-    losses : np.ndarray
-        Array of losses
-    alpha : float
-        Confidence level
-
-    Returns
-    -------
-    (var, es) : tuple[float, float]
     """
     nu, m, s = stats.t.fit(losses)
     q = stats.t.ppf(alpha, nu)
@@ -99,51 +64,7 @@ def evt_var_es(
     threshold_quantile: float = 0.90,
 ) -> tuple[float, float]:
     """
-    VaR and ES with Extreme Value Theory (peaks over threshold).
-
-    Extreme Value Theory models only the tail of the loss distribution.
-    By the Pickands-Balkema-de Haan theorem, the excesses over a high
-    threshold u converge to a Generalized Pareto Distribution (GPD):
-
-        F_u(y) = P(L - u <= y | L > u) ~ G(y) = 1 - (1 + xi * y / beta)^(-1/xi)
-
-    where beta > 0 is the scale and xi is the shape (tail index):
-    xi > 0 heavy (power-law) tail, xi = 0 exponential tail (e.g. Normal),
-    xi < 0 bounded tail.
-
-    With n losses in the window and N_u of them above u (Smith, 1987):
-
-        VaR = u + (beta / xi) * [ (n / N_u * (1 - alpha))^(-xi) - 1 ]
-        ES  = (VaR + beta - xi * u) / (1 - xi),          valid for xi < 1
-
-    and, in the limit xi -> 0 (exponential tail):
-
-        VaR = u + beta * ln( N_u / (n * (1 - alpha)) )
-        ES  = VaR + beta
-
-    Choice of threshold (bias-variance trade-off): a low u includes
-    non-extreme losses, where the GPD approximation is poor (bias); a high u
-    leaves too few excesses to estimate xi and beta (variance). By default
-    u is the 90% empirical quantile of the window: 50 excesses out of 500.
-
-    Parameters
-    ----------
-    losses : np.ndarray
-        Losses in the estimation window.
-    alpha : float
-        Confidence level.
-    threshold_quantile : float
-        Quantile of the losses used as threshold u.
-
-    Returns
-    -------
-    (var, es) : tuple[float, float]
-        Value-at-Risk and Expected Shortfall at level alpha.
-
-    Raises
-    ------
-    ValueError
-        If the fitted xi >= 1, since the ES is then infinite.
+    VaR and ES with Extreme Value Theory.
     """
     losses = np.asarray(losses)
     n = len(losses)
@@ -175,15 +96,6 @@ def _fit_garch_t(losses: np.ndarray):
 
     Losses are multiplied by 100 (percent units) for numerical stability of
     the optimizer, as recommended by the `arch` package; results are scaled back.
-
-    Returns
-    -------
-    res : ARCHModelResult
-        Fitted model (parameters, standardized residuals, ...).
-    mu : float
-        Estimated mean loss.
-    sigma_next : float
-        One-day-ahead conditional volatility forecast sigma_{t+1|t}.
     """
     model = arch_model(
         100 * np.asarray(losses), mean="Constant", vol="GARCH", p=1, q=1, dist="t"
@@ -199,7 +111,9 @@ def _fit_garch_t(losses: np.ndarray):
 
 
 def _standardized_t_var_es(nu: float, alpha: float) -> tuple[float, float]:
-    """VaR and ES of a Student-t rescaled to unit variance."""
+    """
+    VaR and ES of a Student-t rescaled to unit variance.
+    """
     q = stats.t.ppf(alpha, nu)
     scale = np.sqrt((nu - 2) / nu)
     var_z = scale * q
@@ -211,7 +125,6 @@ def garch_t_var_es(losses: np.ndarray, alpha: float = 0.99) -> tuple[float, floa
     """
     VaR and ES from a GARCH(1,1) model with Student-t innovations.
 
-    Model:
         L_t = mu + sigma_t * z_t,   z_t ~ standardized t_nu (unit variance)
         sigma_t^2 = omega + a * eps_{t-1}^2 + b * sigma_{t-1}^2
 
@@ -220,17 +133,6 @@ def garch_t_var_es(losses: np.ndarray, alpha: float = 0.99) -> tuple[float, floa
 
         VaR = mu + sigma_{t+1|t} * q_alpha(z)
         ES  = mu + sigma_{t+1|t} * ES_alpha(z)
-
-    Parameters
-    ----------
-    losses : np.ndarray
-        Losses in the estimation window, in chronological order.
-    alpha : float
-        Confidence level (e.g. 0.99).
-
-    Returns
-    -------
-    (var, es) : tuple[float, float]
     """
     res, mu, sigma_next = _fit_garch_t(losses)
     var_z, es_z = _standardized_t_var_es(res.params["nu"], alpha)
@@ -241,11 +143,11 @@ def garch_evt_var_es(
     losses: np.ndarray, alpha: float = 0.99, threshold_quantile: float = 0.90
 ) -> tuple[float, float]:
     """
-    VaR and ES with GARCH-filtered EVT (McNeil and Frey, 2000).
+    VaR and ES with GARCH-filtered EVT.
 
     1. Fit a GARCH(1,1) to the losses and compute the standardized residuals
        z_t = (L_t - mu) / sigma_t, which are much closer to i.i.d.
-    2. Apply EVT (peaks over threshold, GPD) to the residuals to obtain
+    2. Apply EVT to the residuals to obtain
        q_alpha(z) and ES_alpha(z) without assuming their distribution.
     3. Rescale with tomorrow's conditional volatility:
 
@@ -253,19 +155,6 @@ def garch_evt_var_es(
         ES  = mu + sigma_{t+1|t} * ES_alpha(z)
 
     GARCH captures the dynamics (volatility clustering) and EVT the tail.
-
-    Parameters
-    ----------
-    losses : np.ndarray
-        Losses in the estimation window, in chronological order.
-    alpha : float
-        Confidence level (e.g. 0.99).
-    threshold_quantile : float
-        Quantile of the residuals used as EVT threshold (default 0.90).
-
-    Returns
-    -------
-    (var, es) : tuple[float, float]
     """
     res, mu, sigma_next = _fit_garch_t(losses)
     z = np.asarray(res.std_resid)
