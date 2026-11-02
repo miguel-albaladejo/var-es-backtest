@@ -10,9 +10,11 @@ and Expected Shortfall is. The aim of this project is to test how they behave on
 
 ## Summary and findings
 
-- **The Gaussian VaR fails badly.** On the S&P 500 it is breached on 2.5% of days instead of 1%, and it would have been in the Basel red zone 29% of the time.
-- **Fat tails fix the *number* of breaches; conditional volatility fixes their *timing*.** Without GARCH, the probability of a breach right after another breach is ~9.5% instead of 1%.
-- **Only GARCH-filtered EVT passes the backtests**: it passes the Kupiec test on both indices, all three tests on the IBEX 35, and never enters the Basel red zone over 2002–2026 (including 2008 and 2020).
+- The Gaussian VaR does badly. On the S&P 500 it is breached on 2.5% of days instead of 1%, and it would have been in the Basel red zone 29% of the time.
+
+- Heavier tails bring the number of breaches closer to 1%, but the breaches still come in clusters: without GARCH, the probability of a breach right after another one is around 10%. Adding GARCH brings it down to 3–6%.
+
+- GARCH-filtered EVT is the best model I tested. It passes the Kupiec test on both indices and all three tests on the IBEX 35, and it never enters the Basel red zone between 2002 and 2026. It is not perfect though: on the S&P 500 it still fails the independence test.
 
 ## Data
 
