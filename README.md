@@ -242,21 +242,31 @@ Market-risk capital is roughly the multiplier times the average VaR, so moving i
 
 #### Acerbi & Szekely (2014): Expected Shortfall backtest
 
-ES is harder to backtest than VaR because it is not elicitable (Gneiting, 2011), and for a while it was thought that it could not be backtested at all. Acerbi and Szekely showed that it can, using an identity that holds for a correct model:
+Counting breaches says nothing about how big the losses are, so ES needs its own test. ES is harder to backtest than VaR because it is not elicitable (Gneiting, 2011), and for a while it was thought that it could not be backtested at all. Acerbi and Szekely showed that it can, and the idea is quite simple.
+
+Each day gets a score:
 
 ```math
-\mathbb{E}\left[L_t\, I_t\right] = p \cdot \mathrm{ES}_t
+y_t = \frac{1}{p} \cdot \frac{L_t I_t}{\mathrm{ES}_t}
 ```
 
-They use two statistics, both with zero expectation under $`H_0`$ and negative when the tail risk is underestimated:
+On a normal day the score is 0. On a breach day it is the loss divided by the predicted ES, and then by $`p`$. If the model is correct, breaches happen on a fraction $`p`$ of days and the loss on those days is about $`\mathrm{ES}_t`$, so the average score over all days is 1.
+
+The test statistic measures how far that average is from 1:
 
 ```math
-Z_1 = 1 - \frac{1}{N}\sum_{t:\,I_t=1} \frac{L_t}{\mathrm{ES}_t}
-\qquad
-Z_2 = 1 - \frac{1}{T}\sum_{t=1}^{T} \frac{L_t\, I_t}{p\,\mathrm{ES}_t}
+Z_2 = 1 - \frac{1}{T}\sum_{t=1}^{T} y_t
 ```
 
-$`Z_1`$ looks at the size of the losses on exception days ($`N`$ is the number of exceptions), and $`Z_2`$ looks at their frequency and size together. For the p-value of $`Z_2`$ I use a CLT approximation, $`Z_2 \sqrt{T} / \hat s \approx N(0,1)`$, with $`\hat s`$ the standard deviation of $`L_t I_t / (p\,\mathrm{ES}_t)`$.
+It is 0 for a correct model and negative when the model underestimates risk. With $`T`$ days and $`N`$ breaches, the average score splits into two parts:
+
+```math
+1 - Z_2 = \frac{N/T}{p} \times \frac{1}{N}\sum_{t:\,I_t=1} \frac{L_t}{\mathrm{ES}_t}
+```
+
+The first part tells us if there are too many breaches, and the second one if the losses are too big (it is the Loss / ES column in the table below). For example, on the S&P 500 the Normal gives $`2.48 \times 1.32 \approx 3.27`$ and GARCH-EVT gives $`1.11 \times 1.06 \approx 1.18`$.
+
+For the p-value I test whether the average score is significantly above 1. By the CLT, $`Z_2 \sqrt{T} / \hat s \approx N(0,1)`$, where $`\hat s`$ is the standard deviation of $`y_t`$.
 
 ### Results
 
