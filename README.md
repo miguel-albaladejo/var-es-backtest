@@ -22,27 +22,27 @@ I use daily closing prices from Yahoo Finance for the S&P 500 (`^GSPC`) and the 
 
 ## Notation
 
-- Log-returns: $r_t = \ln(P_t / P_{t-1})$.
-- Losses: $L_t = -r_t$.
-- A VaR exception on day $t$ occurs when $L_t > \mathrm{VaR}_t$.
+- Log-returns: $`r_t = \ln(P_t / P_{t-1})`$.
+- Losses: $`L_t = -r_t`$.
+- A VaR exception on day $`t`$ occurs when $`L_t > \mathrm{VaR}_t`$.
 
 ## Risk measures and models
 
 ### VaR and Expected Shortfall
 
-Let $L$ be the one-day loss, with a continuous distribution, and $\alpha$ the confidence level (99% here):
+Let $`L`$ be the one-day loss, with a continuous distribution, and $`\alpha`$ the confidence level (99% here):
 
-$$
+```math
 \mathrm{VaR}_\alpha(L) = \inf\{x : P(L \le x) \ge \alpha\} \qquad
 \mathrm{ES}_\alpha(L) = \mathbb{E}\left[L \mid L \ge \mathrm{VaR}_\alpha(L)\right]
-$$
+```
 
 It is a well-known result taht VaR is not a coherent risk measure (Artzner et al., 1999): it fails on sub-additivity, so
 diversification may appear to increase risk. However, ES is coherent, and since Basel III (FRTB) it is the regulatory standard at 97.5%.
-In the notation of my thesis, $\mathrm{ES}_{\alpha}(L) = \mathrm{AVaR}_{1-\alpha}(X)$ for the position $X = -L$.
+In the notation of my thesis, $`\mathrm{ES}_{\alpha}(L) = \mathrm{AVaR}_{1-\alpha}(X)`$ for the position $`X = -L`$.
 
 All models produce one-day-ahead forecasts from a rolling 500-day window: the forecast for
-day $t$ uses only the losses of days $t-500, \dots, t-1$.
+day $`t`$ uses only the losses of days $`t-500, \dots, t-1`$.
 
 ### Unconditional models
 
@@ -51,35 +51,35 @@ These models treat the 500 losses in the window as i.i.d. draws from a fixed dis
 **Historical simulation.** VaR is the empirical 99% quantile of
 the window, and ES the mean of the losses at or above it.
 
-**Normal.** $L \sim N(\mu, \sigma^2)$, with $\mu, \sigma$ estimated on the window.
-With $z_\alpha = \Phi^{-1}(\alpha)$, the risk measures read:
+**Normal.** $`L \sim N(\mu, \sigma^2)`$, with $`\mu, \sigma`$ estimated on the window.
+With $`z_\alpha = \Phi^{-1}(\alpha)`$, the risk measures read:
 
-$$
+```math
 \mathrm{VaR}_\alpha = \mu + \sigma z_\alpha \qquad
 \mathrm{ES}_\alpha = \mu + \sigma\,\frac{\varphi(z_\alpha)}{1-\alpha}
-$$
+```
 
-**Student-t.** $L = m + s\,T$ with $T \sim t_\nu$, fitted by maximum likelihood.
-With $q = t_\nu^{-1}(\alpha)$ and $f_\nu$ the $t_\nu$ density:
+**Student-t.** $`L = m + s\,T`$ with $`T \sim t_\nu`$, fitted by maximum likelihood.
+With $`q = t_\nu^{-1}(\alpha)`$ and $`f_\nu`$ the $`t_\nu`$ density:
 
-$$
+```math
 \mathrm{VaR}_\alpha = m + s \ q \qquad
 \mathrm{ES}_\alpha = m + s \ \frac{f_\nu(q)}{1-\alpha}\cdot\frac{\nu + q^2}{\nu - 1}
-$$
+```
 
-**Extreme Value Theory.** Instead of fitting the whole distribution, EVT only models the loss tail. By the Pickands–Balkema–de Haan theorem, for most continuous distributions the excesses over a high threshold $u$ are close to a Generalized Pareto Distribution:
+**Extreme Value Theory.** Instead of fitting the whole distribution, EVT only models the loss tail. By the Pickands–Balkema–de Haan theorem, for most continuous distributions the excesses over a high threshold $`u`$ are close to a Generalized Pareto Distribution:
 
-$$
+```math
 P(L - u \le y \mid L > u) \approx 1 - \left(1 + \frac{\xi y}{\beta}\right)^{-1/\xi}
-$$
+```
 
-where $\xi$ is the tail index (for instance a Student-t with $\nu$ degrees of freedom has $\xi = 1/\nu$). With $u$ the 90% empirical quantile, $n$ observations, $N_u$ excesses and $\xi < 1$ (Smith, 1987):
+where $`\xi`$ is the tail index (for instance a Student-t with $`\nu`$ degrees of freedom has $`\xi = 1/\nu`$). With $`u`$ the 90% empirical quantile, $`n`$ observations, $`N_u`$ excesses and $`\xi < 1`$ (Smith, 1987):
 
-$$
+```math
 \mathrm{VaR}_\alpha = u + \frac{\beta}{\xi}\left[\left(\frac{n}{N_u}(1-\alpha)\right)^{-\xi} - 1\right]
 \qquad
 \mathrm{ES}_\alpha = \frac{\mathrm{VaR}_\alpha + \beta - \xi u}{1 - \xi}
-$$
+```
 
 ### Conditional models
 
@@ -89,24 +89,24 @@ recent past.
 
 **GARCH(1,1)** :
 
-$$
+```math
 L_t = \mu + \sigma_t z_t, \qquad z_t \overset{iid}{\sim} (0,1), \qquad
 \sigma_t^2 = \omega + a\varepsilon_{t-1}^2 + b\sigma_{t-1}^2
-$$
+```
 
-with $\varepsilon_t = L_t - \mu$. This is a well-known model that reproduces volatility clustering.
-Given the one-day-ahead volatility forecast $\sigma_{t+1|t}$:
+with $`\varepsilon_t = L_t - \mu`$. This is a well-known model that reproduces volatility clustering.
+Given the one-day-ahead volatility forecast $`\sigma_{t+1|t}`$:
 
-$$
+```math
 \mathrm{VaR}_\alpha = \mu + \sigma_{t+1|t}\; q_\alpha(z) \qquad
 \mathrm{ES}_\alpha = \mu + \sigma_{t+1|t}\; \mathrm{ES}_\alpha(z)
-$$
+```
 
-**GARCH-t.** Here, $z_t$ follows a Student-t rescaled to unit variance, so $q_\alpha(z)$ and
-$\mathrm{ES}_\alpha(z)$ are the Student-t formulas above multiplied by $\sqrt{(\nu-2)/\nu}$.
+**GARCH-t.** Here, $`z_t`$ follows a Student-t rescaled to unit variance, so $`q_\alpha(z)`$ and
+$`\mathrm{ES}_\alpha(z)`$ are the Student-t formulas above multiplied by $`\sqrt{(\nu-2)/\nu}`$.
 
 **GARCH-filtered EVT** (McNeil & Frey, 2000). In this case, the GARCH model is fitted first, and EVT is then
-applied to the standardized residuals $\hat z_t = (L_t - \hat\mu)/\hat\sigma_t$, which are much
+applied to the standardized residuals $`\hat z_t = (L_t - \hat\mu)/\hat\sigma_t`$, which are much
 closer to i.i.d. than raw losses.
 
 ## Some facts
@@ -126,7 +126,7 @@ closer to i.i.d. than raw losses.
 
 From this statistics, one can already see some of the common facts about financial returns:
 
-- Returns have heavy tails. The worst day of the S&P 500 was a 10.5 $\sigma$ move, which under normality would happen about once every $10^{23}$ years, and it happened in a sample of 26 years. So a Gaussian VaR is going to underestimate the risk in the tail.
+- Returns have heavy tails. The worst day of the S&P 500 was a 10.5 $`\sigma`$ move, which under normality would happen about once every $`10^{23}`$ years, and it happened in a sample of 26 years. So a Gaussian VaR is going to underestimate the risk in the tail.
 
 - They are also negatively skewed: large losses are more frequent than large gains of the same size.
 
@@ -175,54 +175,54 @@ On the S&P 500, EVT and historical simulation have the same exception rate. At 9
 
 ### Methodology
 
-Let $I_t = \mathbf{1}_{\{L_t > \mathrm{VaR}_t\}}$ be the sequence of exceptions. If a VaR model at confidence level $\alpha$ is correct, $I_t$ must satisfy two properties (Christoffersen, 1998):
+Let $`I_t = \mathbf{1}_{\{L_t > \mathrm{VaR}_t\}}`$ be the sequence of exceptions. If a VaR model at confidence level $`\alpha`$ is correct, $`I_t`$ must satisfy two properties (Christoffersen, 1998):
 
-1. Unconditional coverage: $P(I_t = 1) = p$, with $p = 1 - \alpha$.
-2. Independence: $I_t$ is independent of $I_{t-1}, I_{t-2}, \dots$, so exceptions do not cluster in time.
+1. Unconditional coverage: $`P(I_t = 1) = p`$, with $`p = 1 - \alpha`$.
+2. Independence: $`I_t`$ is independent of $`I_{t-1}, I_{t-2}, \dots`$, so exceptions do not cluster in time.
 
-Together, they mean that $I_t \overset{iid}{\sim} \mathrm{Bernoulli}(p)$.
+Together, they mean that $`I_t \overset{iid}{\sim} \mathrm{Bernoulli}(p)`$.
 
 #### Kupiec (1995): proportion-of-failures test
 
-With $x$ exceptions in $n$ days and observed rate $\hat\pi = x/n$, the test compares
+With $`x`$ exceptions in $`n`$ days and observed rate $`\hat\pi = x/n`$, the test compares
 
-$$
+```math
 H_0: P(I_t = 1) = p \qquad \text{vs.} \qquad H_1: P(I_t = 1) \neq p
-$$
+```
 
 through the likelihood ratio of two binomial models:
 
-$$
+```math
 LR_{uc} = -2 \ln \frac{(1-p)^{n-x} p^{x}}{(1-\hat\pi)^{n-x} \hat\pi^{x}} \overset{H_0}{\sim} \chi^2_1
-$$
+```
 
 The test is two-sided: it rejects models with too many exceptions, but also models with too few, which are too conservative and tie up capital for nothing. The problem is that it only counts exceptions and does not look at when they happen.
 
 #### Christoffersen (1998): independence and conditional coverage
 
-Here $I_t$ is modelled as a first-order Markov chain. Let $n_{ij}$ be the number of days with $I_{t-1} = i$ and $I_t = j$, and define
+Here $`I_t`$ is modelled as a first-order Markov chain. Let $`n_{ij}`$ be the number of days with $`I_{t-1} = i`$ and $`I_t = j`$, and define
 
-$$
+```math
 \pi_{01} = \frac{n_{01}}{n_{00} + n_{01}}, \qquad
 \pi_{11} = \frac{n_{11}}{n_{10} + n_{11}}, \qquad
 \pi = \frac{n_{01} + n_{11}}{n_{00} + n_{01} + n_{10} + n_{11}}
-$$
+```
 
-where $\pi_{01}$ is the probability of an exception after a normal day and $\pi_{11}$ the
+where $`\pi_{01}`$ is the probability of an exception after a normal day and $`\pi_{11}`$ the
 probability of an exception right after another exception. Under independence,
-$\pi_{01} = \pi_{11} = \pi$:
+$`\pi_{01} = \pi_{11} = \pi`$:
 
-$$
+```math
 LR_{ind} = -2 \ln \frac{(1-\pi)^{n_{00}+n_{10}} \pi^{n_{01}+n_{11}}}
 {(1-\pi_{01})^{n_{00}} \pi_{01}^{n_{01}} (1-\pi_{11})^{n_{10}} \pi_{11}^{n_{11}}}
 \overset{H_0}{\sim} \chi^2_1
-$$
+```
 
 The conditional coverage test checks both properties at once:
 
-$$
+```math
 LR_{cc} = LR_{uc} + LR_{ind} \overset{H_0}{\sim} \chi^2_2
-$$
+```
 
 A model can pass Kupiec and still fail this test, if the right number of exceptions all happen
 during the same crisis.
@@ -244,19 +244,19 @@ Market-risk capital is roughly the multiplier times the average VaR, so moving i
 
 ES is harder to backtest than VaR because it is not elicitable (Gneiting, 2011), and for a while it was thought that it could not be backtested at all. Acerbi and Szekely showed that it can, using an identity that holds for a correct model:
 
-$$
+```math
 \mathbb{E}\left[L_t\, I_t\right] = p \cdot \mathrm{ES}_t
-$$
+```
 
-They use two statistics, both with zero expectation under $H_0$ and negative when the tail risk is underestimated:
+They use two statistics, both with zero expectation under $`H_0`$ and negative when the tail risk is underestimated:
 
-$$
+```math
 Z_1 = 1 - \frac{1}{N}\sum_{t:\,I_t=1} \frac{L_t}{\mathrm{ES}_t}
 \qquad
 Z_2 = 1 - \frac{1}{T}\sum_{t=1}^{T} \frac{L_t\, I_t}{p\,\mathrm{ES}_t}
-$$
+```
 
-$Z_1$ looks at the size of the losses on exception days ($N$ is the number of exceptions), and $Z_2$ looks at their frequency and size together. For the p-value of $Z_2$ I use a CLT approximation, $Z_2 \sqrt{T} / \hat s \approx N(0,1)$, with $\hat s$ the standard deviation of $L_t I_t / (p\,\mathrm{ES}_t)$.
+$`Z_1`$ looks at the size of the losses on exception days ($`N`$ is the number of exceptions), and $`Z_2`$ looks at their frequency and size together. For the p-value of $`Z_2`$ I use a CLT approximation, $`Z_2 \sqrt{T} / \hat s \approx N(0,1)`$, with $`\hat s`$ the standard deviation of $`L_t I_t / (p\,\mathrm{ES}_t)`$.
 
 ### Results
 
@@ -273,11 +273,11 @@ $Z_1$ looks at the size of the losses on exception days ($N$ is the number of ex
 *Kupiec: correct number of exceptions. Independence: Christoffersen (1998).
 Time in red: share of days with 10+ exceptions in the last 250 days (Basel).*
 
-**Expected Shortfall backtest (Acerbi–Szekely $Z_2$)**
+**Expected Shortfall backtest (Acerbi–Szekely $`Z_2`$)**
 
 | | S&P 500 | | IBEX 35 | |
 |---|---|---|---|---|
-| **Model** | **Loss / ES on breach days** | **$Z_2$ p-value** | **Loss / ES on breach days** | **$Z_2$ p-value** |
+| **Model** | **Loss / ES on breach days** | **$`Z_2`$ p-value** | **Loss / ES on breach days** | **$`Z_2`$ p-value** |
 | Historical | 1.09 | <0.001 | 1.07 | 0.006 |
 | Normal | **1.32** | <0.001 | **1.30** | <0.001 |
 | Student-t | 0.92 | 0.002 | 1.12 | <0.001 |
@@ -293,7 +293,7 @@ GARCH helps a lot here: that probability falls to 3–6%, and GARCH-t passes the
 
 So you need both. GARCH-EVT is the only model that passes the Kupiec test on both indices and the only one that never enters the Basel red zone, against 29% of days for the Gaussian VaR on the S&P 500. On the IBEX it passes all the tests. On the S&P 500 it fails independence, although this rests on only four pairs of consecutive breaches.
 
-As for the ES, the size of the losses is mostly right and the problem is the frequency. On breach days, realized losses are within 14% of the predicted ES for every model except the Normal, whose realized losses are about 30% above its prediction. So most $Z_2$ rejections come from having too many exceptions. GARCH-EVT is the only model whose ES is not rejected on either index at 5%, though the p-values are not large (0.115 and 0.092).
+As for the ES, the size of the losses is mostly right and the problem is the frequency. On breach days, realized losses are within 14% of the predicted ES for every model except the Normal, whose realized losses are about 30% above its prediction. So most $`Z_2`$ rejections come from having too many exceptions. GARCH-EVT is the only model whose ES is not rejected on either index at 5%, though the p-values are not large (0.115 and 0.092).
 
 ![Basel traffic light, S&P 500](figures/basel_GSPC.png)
 ![Realized loss vs predicted ES on breach days, S&P 500](figures/es_breaches_GSPC.png)
@@ -332,11 +332,11 @@ GARCH is not perfect either. The first days of COVID still caught it out, and on
 
 Market-risk capital under the Basel internal-models approach, using the one-day VaR instead of the regulatory 10-day one and without the stressed-VaR add-on:
 
-$$
+```math
 \text{capital}_t = \max\left(\mathrm{VaR}_t,\; m_t \cdot \overline{\mathrm{VaR}}_{t,\,60\text{d}}\right)
-$$
+```
 
-where $m_t \in [3, 4]$ is the traffic-light multiplier.
+where $`m_t \in [3, 4]`$ is the traffic-light multiplier.
 
 | Model | Tests passed (S&P / IBEX) | Avg. capital S&P 500 | Avg. capital IBEX 35 |
 |---|---|---|---|
